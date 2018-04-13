@@ -24,7 +24,9 @@ namespace UMC {
                                            m(m),
                                            opts(o),
                                            current_level(0),
-                                           inductive_trace(opts, stats)
+                                           inductive_trace(opts, stats),
+                                           initiation_checker(m, *ev),
+                                           gs(m, stats, logger, opts, inductive_trace, initiation_checker, *ev)
   {
     ev->begin_local();
     initCircuitData();
@@ -94,6 +96,8 @@ namespace UMC {
     initially.insert(init_cube.begin(), init_cube.end());
     stats.init_state_bits = initially.size();
 
+    initiation_checker.setInit(initially);
+
     model().constRelease(eat);
 
     // Handle the absence of a COIAttachment gracefully by assuming all
@@ -150,7 +154,7 @@ namespace UMC {
   }
 
   bool UMCEngine::initiation(const Cube & cube) const {
-    return checkInitiation(*ev, cube, trueInitCube());
+    return initiation_checker.initiation(cube);
   }
 
   void UMCEngine::logObligation(const ProofObligation & po) const {
@@ -468,7 +472,7 @@ namespace UMC {
 
   void UMCEngine::updateReachabilityBound(int k) {
     auto rat = m.attachment<RchAttachment>(Key::RCH);
-    rat->updateCexLowerBound(k + 2, getName());
+    rat->updateCexLowerBound(k, getName());
     m.release(rat);
   }
 
@@ -503,6 +507,7 @@ namespace UMC {
       // In the case of multiple calls, we'll report the highest level reached
       stats.level = std::max(stats.level, k);
 
+      clearObligations();
       onBeginLevel(k);
       ReturnValue block_rv = proveBounded(k);
       assert(block_rv.returnType != MC::Unknown);
@@ -588,6 +593,14 @@ namespace UMC {
       }
 
       logObligation(po);
+
+      if (numObligations() > options().clear_queue_threshold) {
+        logger.verbose() << "Clearing the queue due to too many obligations" << std::endl;
+        clearObligations();
+        renew();
+        pushObligation(newObligation(bad_cube, k, NULL));
+        continue;
+      }
 
       // Time the obligation in the appropriate bucket
       double & time_bucket = (po.type == MUST_PROOF) ? stats.must_time : stats.may_time;
@@ -959,6 +972,15 @@ namespace UMC {
 
   ProofObligation & UMCEngine::copyObligation(ProofObligation & orig) {
     return newPooledObligation(obligation_pool, orig);
+  }
+
+  int UMCEngine::numObligations() const {
+    return obligations.size();
+  }
+
+  void UMCEngine::clearObligations() {
+    obligations = ObligationQueue();
+    obligation_pool.clear();
   }
 
   ConsecutionChecker * UMCEngine::checkerFromString(const std::string & type) const {

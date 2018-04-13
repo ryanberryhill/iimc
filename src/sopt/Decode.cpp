@@ -1420,7 +1420,7 @@ namespace Expr {
       unordered_map<ID, vector<ID> >::iterator mit = rblocks.find(rep);
       if (mit == rblocks.end())
         rblocks.insert(unordered_map<ID, vector<ID> >::value_type(rep,vector<ID>(1,*it)));
-      else 
+      else
         mit->second.push_back(*it);
     }
     if (verbosity > Options::Informative) {
@@ -1473,7 +1473,7 @@ namespace Expr {
       unordered_map<ID, vector<ID> >::iterator mit = iblocks.find(rep);
       if (mit == iblocks.end())
         iblocks.insert(unordered_map<ID, vector<ID> >::value_type(rep,vector<ID>(1,*it)));
-      else 
+      else
         mit->second.push_back(*it);
     }
     if (verbosity > Options::Informative) {
@@ -1913,15 +1913,15 @@ void decode(
 
   unordered_map<ID,ID> const & ilmap = pm.inputLatchMap();
 
-  ID final;
+  ID final_id;
   if (forward) {
-    final = pm.getLast();
+    final_id = pm.getLast();
   } else {
     // Substitute state variables for corresponding encoding inputs
     // in first.
-    final = Expr::varSub(ev, ilmap, pm.getFirst());
+    final_id = Expr::varSub(ev, ilmap, pm.getFirst());
     if (verbosity > Options::Verbose) {
-      cout << "New first = " << stringOf(ev, final) << endl;
+      cout << "New first = " << stringOf(ev, final_id) << endl;
       cout << "Last = " << stringOf(ev, pm.getLast()) << endl;
     }
   }
@@ -1953,10 +1953,10 @@ void decode(
     }
   }
 
-  // The bad states are in final.
+  // The bad states are in final_id.
   vector<ID> outputs(eat->outputs());
   eat->clearOutputFns();
-  eat->setOutputFn(outputs[0], final);
+  eat->setOutputFn(outputs[0], final_id);
 
   // Put the initial states in AIGER format.
   eat->clearInitialConditions();
@@ -1971,10 +1971,10 @@ void decode(
     cand = ev.apply(Expr::And, cand, *it);
   }
   cand = Expr::varSub(ev, ilmap, cand);
-  //cand = cand | final
-  cand = ev.apply(Expr::Not, ev.apply(Expr::And, 
+  //cand = cand | final_id
+  cand = ev.apply(Expr::Not, ev.apply(Expr::And,
             ev.apply(Expr::Not, cand),
-            ev.apply(Expr::Not, final)));
+            ev.apply(Expr::Not, final_id)));
   ID var = ev.newVar("c0");
   eat->addConstraint(var, cand);
 }
@@ -2084,7 +2084,7 @@ void solveInitEqns(
     for (Expr::IdBddMap::const_iterator i = map.begin(); i != map.end(); ++i)
       bv.push_back(i->second);
     cout << bddMgr.SharingSize(bv) << " BDD nodes" << endl;
-    cout << auxVar.size() << " auxiliary variable" 
+    cout << auxVar.size() << " auxiliary variable"
          << (auxVar.size() != 1 ? "s" : "") << endl;
   }
   vector<BDD> conjAux;
@@ -2282,7 +2282,7 @@ void solveTrelEqns(
     for (Expr::IdBddMap::const_iterator i = map.begin(); i != map.end(); ++i)
       bv.push_back(i->second);
     cout << bddMgr.SharingSize(bv) << " BDD nodes" << endl;
-    cout << auxVar.size() << " auxiliary variable" 
+    cout << auxVar.size() << " auxiliary variable"
          << (auxVar.size() != 1 ? "s" : "") << endl;
   }
   vector<BDD> conjAux;
@@ -2927,7 +2927,7 @@ void DecodeAction::exec(void)
   }
   if (verbosity > Options::Terse)
     cout << (success ? "" : "un") << "successful decoding" << endl;
-  int64_t endTime = Util::get_user_cpu_time(); 
+  int64_t endTime = Util::get_user_cpu_time();
   if (verbosity > Options::Silent)
     cout << "Decoding completed in "
          << ((endTime - startTime) / 1000000.0) << " s" << endl;

@@ -3,6 +3,7 @@
 
 #include "UMC.h"
 #include "InductiveTrace.h"
+#include "Initiation.h"
 #include "Consecution.h"
 #include "Generalization.h"
 #include "ExprAttachment.h"
@@ -29,6 +30,38 @@ namespace UMC {
                               ProofObligationComparator > ObligationQueue;
 
   /*
+   * A struct wrapping references to some global elements that are
+   * owned by the UMCEngine and also the model itself.
+   */
+  struct EngineGlobalState {
+    Model & model;
+    UMCStats & stats;
+    Logger & logger;
+    const UMCOptions & opts;
+    InductiveTrace & inductive_trace;
+    InitiationChecker & initiation_checker;
+    Expr::Manager::View & ev;
+
+    EngineGlobalState(Model & model,
+                      UMCStats & stats,
+                      Logger & logger,
+                      const UMCOptions & opts,
+                      InductiveTrace & inductive_trace,
+                      InitiationChecker & initiation_checker,
+                      Expr::Manager::View & ev) :
+      model(model),
+      stats(stats),
+      logger(logger),
+      opts(opts),
+      inductive_trace(inductive_trace),
+      initiation_checker(initiation_checker),
+      ev(ev)
+
+    { }
+
+  };
+
+  /*
    * Abstract UMC engine that defines the interface with the UMC engines along
    * with a few useful and typical functions that are needed internally.
    */
@@ -50,8 +83,7 @@ namespace UMC {
     protected:
       template<class T>
       T * checker(const IDSet & init) const {
-        return new T(opts, inductive_trace, *ev, m, stats,
-                     init, getNPI(), badVar(), logger);
+        return new T(gs, init, getNPI(), badVar());
       }
 
       template<class T>
@@ -74,7 +106,7 @@ namespace UMC {
 
       template<class G, class C = ConsecutionChecker>
       G * generalizer(C & cons_checker) {
-        return new G(inductive_trace, initially, model(), *ev, options(), stats, cons_checker, logger);
+        return new G(gs, cons_checker);
       }
 
       ConsecutionChecker * checkerFromString(const std::string & type) const;
@@ -159,6 +191,8 @@ namespace UMC {
       virtual void pushObligation(ProofObligation & po);
       virtual ProofObligation & newObligation(const Cube & c, int k, ProofObligation * parent = NULL);
       virtual ProofObligation & copyObligation(ProofObligation & orig);
+      virtual int numObligations() const;
+      virtual void clearObligations();
 
       // Inductive trace funcitonality
       virtual void addCubeByID(CubeID id, int lv) final { addCube(inductive_trace.getCube(id), lv); }
@@ -222,7 +256,6 @@ namespace UMC {
       mutable UMCStats stats;
       mutable Logger logger;
 
-
     private:
       void initCircuitData();
       void setOptions(const UMCOptions & new_opts) { opts = new_opts; }
@@ -241,6 +274,8 @@ namespace UMC {
 
     protected:
       InductiveTrace inductive_trace;
+      InitiationChecker initiation_checker;
+      EngineGlobalState gs;
   };
 
   /*

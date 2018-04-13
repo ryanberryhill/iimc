@@ -27,19 +27,18 @@ namespace UMC {
 
     protected:
       InductiveTrace & inductive_trace;
-      std::set<ID> initially;
       const Model & model;
       const UMCOptions & opts;
       Expr::Manager::View & ev;
       UMCStats & stats;
       ConsecutionChecker & cons_checker;
+      InitiationChecker & initiation_checker;
       Logger & logger;
 
-      PrintCubePair pc(const Cube & cube) const {
-        return std::make_pair(&cube, &ev);
-      }
+      PrintCubePair pc(const Cube & cube) const;
 
       virtual bool initiation(const Cube & cube) const;
+      virtual void initiateCube(Cube & cube, const Cube & prev_cube) const;
       virtual bool consecution(Cube & c, int k, SAT::Assignment * asgn = NULL) const;
       virtual bool consecutionApprox(Cube & c, int k) const;
       virtual bool consecutionBudgeted(Cube & c, int k, int budget, SAT::Assignment * asgn = NULL) const;
@@ -48,23 +47,8 @@ namespace UMC {
       Cube cubeFromAssignment(const SAT::Assignment & asgn) const;
 
     public:
-      Generalizer(InductiveTrace & trace,
-                  const std::set<ID> & initially,
-                  const Model & m,
-                  Expr::Manager::View & ev,
-                  const UMCOptions & opts,
-                  UMCStats & stats,
-                  ConsecutionChecker & cons,
-                  Logger & logger = null_log) :
-        inductive_trace(trace),
-        initially(initially),
-        model(m),
-        opts(opts),
-        ev(ev),
-        stats(stats),
-        cons_checker(cons),
-        logger(logger)
-      { }
+      Generalizer(EngineGlobalState & gs,
+                  ConsecutionChecker & cons);
 
       virtual ~Generalizer() { }
 
@@ -77,15 +61,9 @@ namespace UMC {
    */
   class IterativeGeneralizer : public Generalizer {
     public:
-      IterativeGeneralizer(InductiveTrace & trace,
-                           const std::set<ID> & initially,
-                           const Model & m,
-                           Expr::Manager::View & ev,
-                           const UMCOptions & opts,
-                           UMCStats & stats,
-                           ConsecutionChecker & cons,
-                           Logger & logger = null_log) :
-        Generalizer(trace, initially, m, ev, opts, stats, cons, logger)
+      IterativeGeneralizer(EngineGlobalState & gs,
+                           ConsecutionChecker & cons) :
+        Generalizer(gs, cons)
       { }
 
       virtual int generalize(int lo, int hi, Cube & c) const override;

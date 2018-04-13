@@ -503,6 +503,10 @@ namespace Options {
       ("quip_multi_excl",
        "quip option: use multiSAT + activation for exclusion")
 
+      ("quip_clear_queue",
+        value<int>()->default_value(INT_MAX),
+       "quip option: clear the obligation queue if it gets this large")
+
       ("truss_support_cons",
         value<string>()->default_value(""),
         "truss option: strategy for the support consecution solver")

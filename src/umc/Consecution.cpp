@@ -2,10 +2,33 @@
 #include "ExprAttachment.h"
 #include "CNFAttachment.h"
 #include "Random.h"
+#include "UMCEngine.h"
 
 namespace UMC {
 
   LemmaFilter no_bad_no_ugly = [](const Lemma & lem) { return !lem.bad && !lem.ugly; };
+
+  ConsecutionChecker::ConsecutionChecker(
+                         const EngineGlobalState & gs,
+                         std::set<ID> init_state,
+                         ID property,
+                         ID bad)
+    : badvar(bad),
+      property(property),
+      stale(false),
+      umc_opts(gs.opts),
+      inductive_trace(gs.inductive_trace),
+      ev(gs.ev),
+      model(gs.model),
+      stats(gs.stats),
+      logger(gs.logger),
+      initially(init_state),
+      initiation_checker(gs.initiation_checker)
+  {
+    inductive_trace.registerConsecutionChecker(*this);
+    constructTR();
+  }
+
 
   bool ConsecutionChecker::loadTR(SAT::Manager & manager) {
     bool trivial = false;
@@ -256,7 +279,7 @@ namespace UMC {
    * increased. Demoting a lemma must be handled differently.  The consecution
    * checker will take the appropriate steps. In the case of the standard
    * checker, it will be added to the SAT manager with the new level. However,
-   * for e.g., support computations, nothing should be done whena a lemma is
+   * for e.g., support computations, nothing should be done when a lemma is
    * promoted to a level other than infinity.
    */
   void ConsecutionChecker::lemmaPromoted(CubeID id) {
@@ -287,7 +310,7 @@ namespace UMC {
    * Syntactic check for initiation
    */
   bool ConsecutionChecker::initiation(const Cube & cube) const {
-    return checkInitiation(ev, cube, initially);
+    return initiation_checker.initiation(cube);
   }
 
 

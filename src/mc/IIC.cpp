@@ -60,6 +60,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "Slice.h"
 #include "BddGSH.h"
 #include "Random.h"
+#include "UMC.h"
 
 #include <boost/program_options.hpp>
 
@@ -155,7 +156,7 @@ namespace {
           Automaton::State source = it->source;
           std::vector<ID> conj;
           for(unsigned latch = 0; latch < numLatches; ++latch) {
-            conj.push_back(source % 2 == 1 ? 
+            conj.push_back(source % 2 == 1 ?
                            autLatches[latch] :
                            v->apply(Expr::Not, autLatches[latch]));
             source >>= 1;
@@ -238,7 +239,7 @@ namespace IIC {
       std::vector<Automaton> automata = eat->automata();
       if (pi >= automata.size())
         throw InputError("property index out of range");
-      if (model().options().count("print_auto") > 0) 
+      if (model().options().count("print_auto") > 0)
         std::cout << driver.toDot(pi) << std::endl;
       eat->clearBadFns();
       eat->clearJusticeSets();
@@ -251,7 +252,7 @@ namespace IIC {
     else if (eat->bad().size() > 0 && pi < eat->bad().size()) { // safety
       if (model().verbosity() > Options::Silent &&
           (eat->bad().size() > 1 ||
-           eat->fairness().size() > 0 || 
+           eat->fairness().size() > 0 ||
            eat->justice().size() > 0))
         std::cout << "IGNORING ALL BUT BAD OUTPUT " << pi << std::endl;
       eat->clearOutputFns();
@@ -466,8 +467,9 @@ namespace IIC {
         model().pushFrontTactic(new FCBMC::FCBMCAction(model()));
       } else {
         // Multi-thread recipe.
-	if (model().verbosity() > Options::Terse)
-	  cout << "Scheduling " << nthreads << " threads. Model size: "<< modelSize << endl;
+        if (model().verbosity() > Options::Terse) {
+          cout << "Scheduling " << nthreads << " threads. Model size: "<< modelSize << endl;
+        }
         // Set option defaults.
         model().setOptionValue("fcbmc_timeout", -1);
         model().setOptionValue("bdd_timeout", (unsigned long) 15);
@@ -591,18 +593,28 @@ namespace IIC {
 
 
   void HwmccAction::exec() {
-    model().pushFrontTactic(new IIC::IICAction(model()));
-    if (model().defaultMode() == Model::mIC3) {
-      model().pushFrontTactic(new SliceAction(model()));
-      //model().pushFrontTactic(new IIC::HalfPreProcessAction(model()));
+    if (model().options().count("old_hwmcc") || model().defaultMode() != Model::mIC3) {
+      model().pushFrontTactic(new IIC::IICAction(model()));
+      if (model().defaultMode() == Model::mIC3) {
+        model().pushFrontTactic(new SliceAction(model()));
+        model().pushFrontTactic(new IIC::PreProcessAction(model()));
+        model().pushFrontTactic(new PhaseAbstractionAction(model()));
+      }
       model().pushFrontTactic(new IIC::PreProcessAction(model()));
-      model().pushFrontTactic(new PhaseAbstractionAction(model()));
+      if (model().defaultMode() == Model::mIC3) {
+        model().pushFrontTactic(new DecodeAction(model()));
+      }
+      model().pushFrontTactic(new IIC::StandardOptionsAction(model()));
+    } else {
+      model().pushFrontTactic(new UMC::UMCAction(model()));
+      // TODO: slice action messes up Quip for some reason
+      //model().pushFrontTactic(new SliceAction(model()));
+      //model().pushFrontTactic(new IIC::PreProcessAction(model()));
+      //model().pushFrontTactic(new PhaseAbstractionAction(model()));
+      //model().pushFrontTactic(new IIC::PreProcessAction(model()));
+      //model().pushFrontTactic(new DecodeAction(model()));
+      model().pushFrontTactic(new IIC::StandardOptionsAction(model()));
     }
-    model().pushFrontTactic(new IIC::PreProcessAction(model()));
-    if (model().defaultMode() == Model::mIC3) {
-      model().pushFrontTactic(new DecodeAction(model()));
-    }
-    model().pushFrontTactic(new IIC::StandardOptionsAction(model()));
   }
 
 

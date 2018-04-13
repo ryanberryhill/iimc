@@ -3,6 +3,7 @@
 
 #include "UMC.h"
 #include "InductiveTrace.h"
+#include "Initiation.h"
 #include <unordered_map>
 #include <boost/core/demangle.hpp>
 
@@ -36,7 +37,7 @@ namespace UMC {
   };
 
   /*
-   * ConsecutionChecker is an abstract class to manage solving doConsecution
+   * ConsecutionChecker is an abstract class to manage solving consecution
    * queries.  It handles the SAT::Manager(s) and Views and can answer queries.
    * Subclasses can handle other variations on doConsecution queries. For
    * instance, UNSAT core lifting or support graph computations can be handled
@@ -71,6 +72,7 @@ namespace UMC {
       UMCStats & stats;
       Logger & logger;
       std::set<ID> initially;
+      InitiationChecker & initiation_checker;
 
       PrintCubePair pc(const Cube & cube) const {
         return std::make_pair(&cube, &ev);
@@ -97,10 +99,11 @@ namespace UMC {
       const UMCOptions & options() const { return umc_opts; }
       const std::string & backend() const { return options().backend; }
       virtual void setFilter(LemmaFilter f) { filter = f; }
+      virtual bool initiation(const Cube & cube) const;
 
     public:
       /*
-       * Construct the checker. The trace, model and log are self-explanatory.
+       * Construct the checker.
        *
        * bad: The ID of a special variable that appears in the inductive trace
        * and represents the "property lemma." There may (almost certainly will)
@@ -114,29 +117,10 @@ namespace UMC {
        * states. Any cubes reduced during doConsecution will satisfy initiation
        * with respect to this cube.
        */
-      ConsecutionChecker(const UMCOptions & opts,
-                         const InductiveTrace & trace,
-                         Expr::Manager::View & ev,
-                         Model & model,
-                         UMCStats & stats,
+      ConsecutionChecker(const EngineGlobalState & gs,
                          std::set<ID> init_state,
                          ID property,
-                         ID bad,
-                         Logger & logger = null_log)
-        : badvar(bad),
-          property(property),
-          stale(false),
-          umc_opts(opts),
-          inductive_trace(trace),
-          ev(ev),
-          model(model),
-          stats(stats),
-          logger(logger),
-          initially(init_state)
-      {
-        trace.registerConsecutionChecker(*this);
-        constructTR();
-      }
+                         ID bad);
 
       virtual ~ConsecutionChecker()
       {
@@ -165,7 +149,6 @@ namespace UMC {
       virtual bool consecution(const Cube & c, int k, Cube & reduced) final;
       virtual bool consecution(ConsecutionOpts & opts) final;
       virtual bool doConsecution(ConsecutionOpts & opts) = 0;
-      virtual bool initiation(const Cube & cube) const;
 
       // They're the same filter, but to make it clear as to whether it's
       // a strong filter (applies at doConsecution-time) or a lazy filter
@@ -196,16 +179,11 @@ namespace UMC {
       virtual void doLoadLemma(const Lemma & lem) override;
 
     public:
-      LevelBasedConsecutionChecker(const UMCOptions & opts,
-                                   const InductiveTrace & trace,
-                                   Expr::Manager::View & ev,
-                                   Model & model,
-                                   UMCStats & stats,
+      LevelBasedConsecutionChecker(const EngineGlobalState & gs,
                                    std::set<ID> init_state,
                                    ID property,
-                                   ID bad,
-                                   Logger & logger = null_log)
-        : ConsecutionChecker(opts, trace, ev, model, stats, init_state, property, bad, logger)
+                                   ID bad)
+        : ConsecutionChecker(gs, init_state, property, bad)
       { }
 
       // It's unfortunately necessary (or at least reasonable) to have the
@@ -227,16 +205,11 @@ namespace UMC {
     protected:
       virtual void doLoadLemma(const Lemma & lem) override;
     public:
-      InfOnlyConsecutionChecker(const UMCOptions & opts,
-                                const InductiveTrace & trace,
-                                Expr::Manager::View & ev,
-                                Model & model,
-                                UMCStats & stats,
+      InfOnlyConsecutionChecker(const EngineGlobalState & gs,
                                 std::set<ID> init_state,
                                 ID property,
-                                ID bad,
-                                Logger & logger = null_log)
-        : LevelBasedConsecutionChecker(opts, trace, ev, model, stats, init_state, property, bad, logger)
+                                ID bad)
+        : LevelBasedConsecutionChecker(gs, init_state, property, bad)
       { }
   };
 
@@ -265,16 +238,11 @@ namespace UMC {
                            const Cube & s) const;
 
     public:
-      UNSATCoreLifter(const UMCOptions & opts,
-                      const InductiveTrace & trace,
-                      Expr::Manager::View & ev,
-                      Model & model,
-                      UMCStats & stats,
+      UNSATCoreLifter(const EngineGlobalState & gs,
                       std::set<ID> init_state,
                       ID property,
-                      ID bad,
-                      Logger & logger = null_log)
-        : InfOnlyConsecutionChecker(opts, trace, ev, model, stats, init_state, property, bad, logger)
+                      ID bad)
+        : InfOnlyConsecutionChecker(gs, init_state, property, bad)
       { }
 
       virtual bool doConsecution(ConsecutionOpts & opts) override;
@@ -292,16 +260,11 @@ namespace UMC {
     protected:
       virtual void doLoadLemma(const Lemma & lem) override;
     public:
-      InitialChecker(const UMCOptions & opts,
-                     const InductiveTrace & trace,
-                     Expr::Manager::View & ev,
-                     Model & model,
-                     UMCStats & stats,
+      InitialChecker(const EngineGlobalState & gs,
                      std::set<ID> init_state,
                      ID property,
-                     ID bad,
-                     Logger & logger = null_log)
-        : LevelBasedConsecutionChecker(opts, trace, ev, model, stats, init_state, property, bad, logger)
+                     ID bad)
+        : LevelBasedConsecutionChecker(gs, init_state, property, bad)
       { }
   };
 
@@ -313,16 +276,11 @@ namespace UMC {
     protected:
       virtual void doLoadLemma(const Lemma & lem) override;
     public:
-      InfChecker(const UMCOptions & opts,
-                 const InductiveTrace & trace,
-                 Expr::Manager::View & ev,
-                 Model & model,
-                 UMCStats & stats,
+      InfChecker(const EngineGlobalState & gs,
                  std::set<ID> init_state,
                  ID property,
-                 ID bad,
-                 Logger & logger = null_log)
-        : LevelBasedConsecutionChecker(opts, trace, ev, model, stats, init_state, property, bad, logger)
+                 ID bad)
+        : LevelBasedConsecutionChecker(gs, init_state, property, bad)
       { }
   };
 
@@ -336,16 +294,11 @@ namespace UMC {
       virtual void doLoadLemma(const Lemma & lem) override;
       std::set<CubeID> computeSupport(const Cube & crits) const;
     public:
-      ActivationBasedConsecutionChecker(const UMCOptions & opts,
-                                        const InductiveTrace & trace,
-                                        Expr::Manager::View & ev,
-                                        Model & model,
-                                        UMCStats & stats,
+      ActivationBasedConsecutionChecker(const EngineGlobalState & gs,
                                         std::set<ID> init_state,
                                         ID property,
-                                        ID bad,
-                                        Logger & logger = null_log)
-        : LevelBasedConsecutionChecker(opts, trace, ev, model, stats, init_state, property, bad, logger)
+                                        ID bad)
+        : LevelBasedConsecutionChecker(gs, init_state, property, bad)
       { }
 
       virtual bool doConsecution(ConsecutionOpts & opts) override;
@@ -393,16 +346,11 @@ namespace UMC {
       SAT::Manager::View & getView(int level);
 
     public:
-      MultiSATConsecutionChecker(const UMCOptions & opts,
-                                 const InductiveTrace & trace,
-                                 Expr::Manager::View & ev,
-                                 Model & model,
-                                 UMCStats & stats,
+      MultiSATConsecutionChecker(const EngineGlobalState & gs,
                                  std::set<ID> init_state,
                                  ID property,
-                                 ID bad,
-                                 Logger & logger = null_log)
-        : ConsecutionChecker(opts, trace, ev, model, stats, init_state, property, bad, logger)
+                                 ID bad)
+        : ConsecutionChecker(gs, init_state, property, bad)
       { }
 
       virtual bool doRenewSAT() override;
@@ -414,16 +362,11 @@ namespace UMC {
       virtual void addLemmaToManager(const Lemma & lem, SAT::Manager & manager) override;
       virtual std::set<CubeID> computeSupport(const Cube & crits) const;
     public:
-      ActivationMultiSATConsecutionChecker(const UMCOptions & opts,
-                                 const InductiveTrace & trace,
-                                 Expr::Manager::View & ev,
-                                 Model & model,
-                                 UMCStats & stats,
-                                 std::set<ID> init_state,
-                                 ID property,
-                                 ID bad,
-                                 Logger & logger = null_log)
-        : MultiSATConsecutionChecker(opts, trace, ev, model, stats, init_state, property, bad, logger)
+      ActivationMultiSATConsecutionChecker(const EngineGlobalState & gs,
+                                           std::set<ID> init_state,
+                                           ID property,
+                                           ID bad)
+        : MultiSATConsecutionChecker(gs, init_state, property, bad)
       { }
 
       virtual bool doConsecution(ConsecutionOpts & opts) override;

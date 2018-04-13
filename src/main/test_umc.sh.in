@@ -42,7 +42,7 @@ done
 for aig in safe/cmugigamax.aig unsafe/oski15a14b01s.aig
 do
   printf "Checking for memory errors with $aig: "
-  valgrind_cmd="valgrind --leak-check=full --error-exitcode=1 ./iimc$EXE -t quip -v $verbosity $aigdir/$aig $@"
+  valgrind_cmd="valgrind --leak-check=full --error-exitcode=1 ./iimc$EXE -v $verbosity $aigdir/$aig $@"
   valgrind_result=`eval $valgrind_cmd > /dev/null 2>&1`
   valgrind_failed=`expr $? != 0`
   

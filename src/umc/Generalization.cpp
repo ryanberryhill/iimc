@@ -1,6 +1,24 @@
+#include "UMCEngine.h"
 #include "Generalization.h"
 
 namespace UMC {
+
+  Generalizer::Generalizer(EngineGlobalState & gs,
+                           ConsecutionChecker & cons) :
+        inductive_trace(gs.inductive_trace),
+        model(gs.model),
+        opts(gs.opts),
+        ev(gs.ev),
+        stats(gs.stats),
+        cons_checker(cons),
+        initiation_checker(gs.initiation_checker),
+        logger(gs.logger)
+      { }
+
+
+  PrintCubePair Generalizer::pc(const Cube & cube) const {
+    return std::make_pair(&cube, &ev);
+  }
 
   /*
    * Essentially a wrapper around the consecution checker
@@ -54,7 +72,14 @@ namespace UMC {
    * Syntactic check for initiation
    */
   bool Generalizer::initiation(const Cube & cube) const {
-    return cons_checker.initiation(cube);
+    return initiation_checker.initiation(cube);
+  }
+
+  /*
+   * Add a literal from prev_cube to cube so that it satisfies initiation
+   */
+  void Generalizer::initiateCube(Cube & cube, const Cube & prev_cube) const {
+    initiation_checker.initiateCube(cube, prev_cube);
   }
 
   /*
@@ -230,13 +255,7 @@ namespace UMC {
 
     if (!sup.empty() && !initiation(sup) && !initiation(cube)) {
       // Put back a literal
-      for (ID lit : prev_cube) {
-        ID nlit = ev.apply(Expr::Not, lit);
-        if (initially.count(nlit)) {
-          cube.push_back(lit);
-          break;
-        }
-      }
+      initiateCube(cube, prev_cube);
     }
 #ifdef DEBUG
     Cube c = cube_copy;

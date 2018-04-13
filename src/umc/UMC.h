@@ -30,6 +30,9 @@ namespace UMC {
   typedef std::set<CubeID> Frame;
   typedef std::set<ID> IDSet;
 
+  // Defined in UMCEngine.h
+  struct EngineGlobalState;
+
   /*
    * This action is analagous to the IICAction, but uses different
    * strategies, notably adding the UMCSolverActions
@@ -495,6 +498,7 @@ namespace UMC {
     int gen_fails;
     int gen_budget;
     int lift_budget;
+    int clear_queue_threshold;
 
     UMCOptions() :  backend("glucose"),
                     primary_cons("multi"),
@@ -527,7 +531,8 @@ namespace UMC {
                     up_threshold(-1),
                     gen_fails(-1),
                     gen_budget(-1),
-                    lift_budget(-1)
+                    lift_budget(-1),
+                    clear_queue_threshold(INT_MAX)
     { }
 
     UMCOptions(
@@ -598,6 +603,8 @@ namespace UMC {
       sg_infdot_file = opts["truss_infdot"].as<std::string>();
       sg_dot_file = opts["truss_dot"].as<std::string>();
       ugly_lemmas = !opts.count("truss_xugly");
+
+      clear_queue_threshold = opts["quip_clear_queue"].as<int>();
 
       // Without ugly lemmas, the effort limits cause non-termination
       assert(sg_effort_limit == INT_MAX || ugly_lemmas);

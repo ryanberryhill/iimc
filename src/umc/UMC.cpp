@@ -135,10 +135,6 @@ namespace UMC {
     return negCube;
   }
 
-  bool checkInitiation(Expr::Manager::View & ev, const Cube & cube, const std::set<ID> & init) {
-    return cubeContains(negateCube(ev, cube), init);
-  }
-
   /*
    * Returns the variable corresponding to the given literal. In other words,
    * removes any negation if present.

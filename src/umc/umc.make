@@ -7,6 +7,8 @@ umc_UMC_sources = \
   src/umc/InductiveTrace.cpp \
   src/umc/Consecution.h \
   src/umc/Consecution.cpp \
+  src/umc/Initiation.h \
+  src/umc/Initiation.cpp \
   src/umc/Generalization.h \
   src/umc/Generalization.cpp \
   src/umc/SupportGraph.h \

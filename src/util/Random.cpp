@@ -36,6 +36,7 @@ void RandomGenerator::setTerminationFlag(atomic<bool> & tf)
   _termination_flag = &tf;
 }
 
+#if 0
 void RandomGenerator::checkFuture()
 {
   thread_local static int delayCounter(0);
@@ -47,6 +48,17 @@ void RandomGenerator::checkFuture()
     if (*_termination_flag) {
       throw Termination("Promise satisfied.");
     }
+  }
+}
+#endif
+
+// The delay above is detrimental to performance for the Quip and Truss
+// tactics. They use far less randomness than IC3 does, so basically the
+// delaycounter never gets up to 1000
+void RandomGenerator::checkFuture() {
+  if ( _termination_flag == nullptr) { return; }
+  if (_termination_flag->load()) {
+    throw Termination("Promise satisfied.");
   }
 }
 
