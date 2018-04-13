@@ -68,6 +68,9 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "TacticMisc.h"
 #include "IIC.h"
 #include "Persist.h"
+#include "Quip.h"
+#include "Truss.h"
+#include "UMCIC3.h"
 
 #if SIZEOF_VOID_P==8
 #define VERY_LARGE 13958643712
@@ -104,6 +107,11 @@ namespace IICTL {
 }
 namespace FCBMC {
   ActionRegistrar FCBMCAction::action("fcbmc", "Fair-Cycle Bounded Model Checker");
+}
+namespace UMC {
+	template<> ActionRegistrar QuipAction::action("quip", "Quip");
+	template<> ActionRegistrar TrussAction::action("truss", "Truss");
+	template<> ActionRegistrar IC3Action::action("umcic3", "UMC-IC3");
 }
 ActionRegistrar KLiveAction::action("klive", "k-Liveness Fair-Cycle Checker");
 //Proof Engines
@@ -208,7 +216,7 @@ namespace Options {
 
       ("version,V", "Print version information")
 
-      ("verbosity,v", 
+      ("verbosity,v",
        value<int>(&verbosityLevel)->default_value(0),
        "Set verbosity level (0-4)")
 
@@ -217,6 +225,9 @@ namespace Options {
 
       ("cex_aiger",
        "Print counterexample in AIGER format")
+
+      ("old_hwmcc",
+       "Use the original HWMCC action from iimc-2.0")
 
       ("pre",
        "Take the precondition of the output as the target. Only works if the output is a function of state variables only.")
@@ -281,9 +292,9 @@ namespace Options {
       ("bmc_backend",
        value<string>()->default_value("minisat"),
 #ifdef DISABLE_ZCHAFF
-       "BMC option: select SAT solver (Available options: \"minisat\")")
+       "BMC option: select SAT solver (Available options: \"minisat\", \"picosat\", \"glucose\")")
 #else
-       "BMC option: select SAT solver (Available options: \"zchaff\", \"minisat\")")
+       "BMC option: select SAT solver (Available options: \"zchaff\", \"minisat\", \"picosat\", \"glucose\")")
 #endif
 
       ("ic3_verify",
@@ -291,7 +302,7 @@ namespace Options {
 
       ("ic3_verify_cex",
        "IC3 option: verify IC3's counterexample")
- 
+
       ("ic3_nRuns",
        value<unsigned int>()->default_value(20),
        "IC3 option: number of simulation runs for equivalence")
@@ -322,6 +333,12 @@ namespace Options {
 
       ("ic3_xlift",
        "ic3 option: Disable lifting of CTIs")
+
+      ("ic3_xconsmem",
+       "ic3 option: Disable consecution memory")
+
+      ("ic3_xsubsumption",
+       "ic3 option: Disable use of subsumption reduction")
 
       ("ic3_laggr",
        value<int>()->default_value(0),
@@ -393,10 +410,10 @@ namespace Options {
       ("ic3_backend",
 #ifdef DISABLE_ZCHAFF
        value<string>()->default_value("minisat"),
-       "ic3 option: select SAT solver (Available options: \"minisat\")")
+       "ic3 option: select SAT solver (Available options: \"minisat\", \"picosat\", \"glucose\")")
 #else
        value<string>()->default_value("zchaff"),
-       "ic3 option: select SAT solver (Available options: \"zchaff\", \"minisat\")")
+       "ic3 option: select SAT solver (Available options: \"zchaff\", \"minisat\", \"picosat\", \"glucose\")")
 #endif
 
       ("ic3_pushLast",
@@ -404,6 +421,123 @@ namespace Options {
 
       ("ic3_minCex",
        "ic3 option: only find minimum-length counterexamples")
+
+      ("umc_backend",
+       value<string>()->default_value(""),
+#ifdef DISABLE_ZCHAFF
+       "UMC option: select SAT solver (Available options: \"minisat\", \"picosat\", \"glucose\")")
+#else
+       "UMC option: select SAT solver (Available options: \"zchaff\", \"minisat\", \"picosat\", \"glucose\")")
+#endif
+
+      ("umc_stats",
+        "UMC option: Print statistics about the run run")
+
+      ("umc_xlift",
+        "UMC option: do not do UNSAT core lifting")
+
+      ("umc_primary_cons",
+        value<string>()->default_value(""),
+        "UMC option: strategy for the primary consecution solver")
+
+      ("umc_gen",
+       value<string>()->default_value(""),
+       "UMC option: strategy for generalization")
+
+      ("umc_gen_budget",
+       value<int>()->default_value(-1),
+       "UMC option: approximate in generalization using the given decision budget")
+
+      ("umc_lift_budget",
+       value<int>()->default_value(-1),
+       "UMC option: approximate in lifting using the given decision budget")
+
+      ("umc_lift",
+       value<string>()->default_value(""),
+       "UMC option: strategy for lifting")
+
+      ("umc_xreduce_inf",
+       "UMC option: disable reduction of absolute invariants")
+
+      ("umc_xreduce_frames",
+       "UMC option: disable push reduction of frames")
+
+      ("umc_xsubsumption",
+       "UMC option: disable subsumption-based lemma elimination")
+
+      ("umc_xabbr",
+       "UMC option: disable use of abbreviations for consecution with activation literals")
+
+      ("umc_num_ctgs",
+       value<int>()->default_value(3),
+       "UMC option: maximum number of CTGs to consider")
+
+      ("umc_ctg_depth",
+       value<int>()->default_value(1),
+       "UMC option: maximum recursive depth for CTGs")
+
+      ("umc_up_threshold",
+       value<int>()->default_value(25),
+       "UMC option: minimum cube size to apply up")
+
+      ("umc_gen_fails",
+       value<int>()->default_value(INT_MAX),
+       "UMC option: maximum number of retries in brute-force generalization")
+
+      ("quip_max_reachable_states",
+        value<int>()->default_value(100000),
+       "quip option: maximum number of reachable states to keep")
+
+      ("quip_xreenq_both",
+       "quip option: disable re-enqueueing of must proofs")
+
+      ("quip_excl_gen",
+       "quip option: exclude some or all bad lemmas in generalization")
+
+      ("quip_excl_push",
+       "quip option: exclude some or all bad lemmas in pushing")
+
+      ("quip_lazy_excl",
+       "quip option: use lazy exclusion")
+
+      ("quip_multi_excl",
+       "quip option: use multiSAT + activation for exclusion")
+
+      ("truss_support_cons",
+        value<string>()->default_value(""),
+        "truss option: strategy for the support consecution solver")
+
+      ("truss_min_sg_level",
+        value<int>()->default_value(1),
+       "truss option: minimum level at which to apply experimental support graph")
+
+      ("truss_effort_limit",
+        value<int>()->default_value(INT_MAX),
+       "truss option: maximum effort to spend on SGObligations")
+
+      ("truss_effort_limit_minlvl",
+        value<int>()->default_value(INT_MAX),
+       "truss option: maximum effort to spend on SGObligations at the lowest level")
+
+      ("truss_dot",
+       value<string>()->default_value(""),
+       "truss option: optional filename to write support graph to in .dot format")
+
+      ("truss_infdot",
+       value<string>()->default_value(""),
+       "truss option: optional filename to write support graph for F_inf to in .dot format")
+
+      ("truss_desperate_sg",
+       "truss option: when unable to find acceptable SG, try again considering F_1")
+
+      ("truss_reenq",
+       "truss option: enable re-enqueueing of lemmas")
+
+      ("truss_xugly",
+        "truss option: disable ugly lemmas")
+
+      ("truss_final_sg",
+        "truss option: rebuild support graph upon termination")
 
       ("iictl_verbosity",
        value<int>(),
@@ -429,7 +563,7 @@ namespace Options {
         value<int>()->default_value(1),
        "IICTL Option: Aggression level for generalization traces (0-2)")
 
-      ("iictl_fair_grppt", 
+      ("iictl_fair_grppt",
        value<int>()->default_value(3),
        "IICTL option: The type of proof processing to apply on global reachability proofs in FAIR queries initiated by IICTL (0-3). 0 = NONE, 1 = STRENGTHEN, 2 = WEAKEN, 3 = SHRINK")
 
@@ -498,9 +632,9 @@ namespace Options {
       ("satsweep_backend",
        value<string>()->default_value("minisat"),
 #ifdef DISABLE_ZCHAFF
-       "SAT sweeping option: select SAT solver (Available options: \"minisat\")")
+       "SAT sweeping option: select SAT solver (Available options: \"minisat\", \"picosat\", \"glucose\")")
 #else
-       "SAT sweeping option: select SAT solver (Available options: \"zchaff\", \"minisat\")")
+       "SAT sweeping option: select SAT solver (Available options: \"zchaff\", \"minisat\", \"picosat\", \"glucose\")")
 #endif
 
       ("cutsweep_nodeMax",
@@ -639,16 +773,16 @@ namespace Options {
 
       ("fair_phase", "try phase abstraction before running fair")
 
-      ("fcbmc_timeout", value<int>()->default_value(60), "FCBMC: set timeout") 
+      ("fcbmc_timeout", value<int>()->default_value(60), "FCBMC: set timeout")
 
-      ("fcbmc_bound", value<int>()->default_value(8191), "FCBMC: set bound for k") 
+      ("fcbmc_bound", value<int>()->default_value(8191), "FCBMC: set bound for k")
 
       ("fcbmc_backend",
        value<string>()->default_value("minisat"),
 #ifdef DISABLE_ZCHAFF
-       "FCBMC option: select SAT solver (Available options: \"minisat\")")
+       "FCBMC option: select SAT solver (Available options: \"minisat\", \"picosat\", \"glucose\")")
 #else
-       "FCBMC option: select SAT solver (Available options: \"zchaff\", \"minisat\")")
+       "FCBMC option: select SAT solver (Available options: \"zchaff\", \"minisat\", \"picosat\", \"glucose\")")
 #endif
 
       ("fcbmc_memlimit",
@@ -722,7 +856,7 @@ namespace Options {
 
     if (varMap.count("verbosity")) {
       if (verbosityLevel < 0 || verbosityLevel > 4) {
-        cout << "Error: Verbosity level (" << verbosityLevel 
+        cout << "Error: Verbosity level (" << verbosityLevel
              << ") out of range (0-4)" << endl;
         ret |= 1;
       }
@@ -764,7 +898,7 @@ namespace Options {
     if (varMap.count("satsweep_verbosity")) {
       int satsweepVerbosityLevel = varMap["satsweep_verbosity"].as<int>();
       if (satsweepVerbosityLevel < 0 || satsweepVerbosityLevel > 4) {
-        cout << "Error: SAT Sweep Verbosity level (" << satsweepVerbosityLevel 
+        cout << "Error: SAT Sweep Verbosity level (" << satsweepVerbosityLevel
              << ") out of range (0-4)" << endl;
         ret |= 1;
       }
@@ -786,7 +920,7 @@ namespace Options {
       }
     }
     else {
-      cout << "Error: Input file missing" << endl << endl; 
+      cout << "Error: Input file missing" << endl << endl;
       ret |= 1;
     }
 
@@ -845,6 +979,9 @@ namespace Options {
         else if (*it == "iictl")           t = new IICTL::IICTLAction(model);
         else if (*it == "check")           t = new IIC::IICAction(model);
         else if (*it == "fcbmc")           t = new FCBMC::FCBMCAction(model);
+        else if (*it == "quip")            t = new UMC::UMCSolverAction<UMC::QuipSolver>(model);
+        else if (*it == "truss")           t = new UMC::UMCSolverAction<UMC::TrussSolver>(model);
+        else if (*it == "umcic3")          t = new UMC::UMCSolverAction<UMC::IC3Solver>(model);
         else if (*it == "gsh")             t = new BddGSHAction(model);
         else if (*it == "fork")            t = new Dispatch::Fork(model);
         else if (*it == "join")            t = new Dispatch::Join(model);

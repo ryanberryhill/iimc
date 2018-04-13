@@ -90,12 +90,14 @@ public:
    * implementation; it can only be used when there is when sat()
    * call involving the clause group.
    */
-  bool sat(Expr::IDVector * assumptions = NULL, 
-           Assignment * asgn = NULL, 
-           Expr::IDVector * criticalUnits = NULL, 
+  bool sat(Expr::IDVector * assumptions = NULL,
+           Assignment * asgn = NULL,
+           Expr::IDVector * criticalUnits = NULL,
            GID gid = NULL_GID,
            bool full_init = false,
-           Assignment * lift = NULL);
+           Assignment * lift = NULL,
+           std::vector<Clause> * core = NULL,
+           int * decision_budget = NULL);
 
   /**
    * Set this view's maximum allotted solving time.

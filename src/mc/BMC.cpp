@@ -437,9 +437,9 @@ namespace BMC {
         pcons_clauses = opts.am->ptr;
     }
     else {
-      CNFAttachment * cnfat = (CNFAttachment *) m.constAttachment(Key::CNF);
+      auto cnfat = m.attachment<CNFAttachment>(Key::CNF);
       cons_clauses = opts.useCOI ? cnfat->getCNF() : cnfat->getPlainCNF();
-      m.constRelease(cnfat);
+      m.release(cnfat);
     }
 
     if(opts.constraints) {

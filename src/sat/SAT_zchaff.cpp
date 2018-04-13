@@ -44,7 +44,7 @@ using namespace std;
 
 namespace SAT {
 
-  ZchaffView::ZchaffView(Manager & _man, Expr::Manager::View & _eview) : 
+  ZchaffView::ZchaffView(Manager & _man, Expr::Manager::View & _eview) :
     View(_man, _eview)
   {
     satMan = SAT_InitManager();
@@ -96,10 +96,15 @@ namespace SAT {
     gids.erase(theGid);
   }
 
-  bool ZchaffView::sat(Expr::IDVector * assump, Assignment * asgn, 
-                          Expr::IDVector * crits, GID gid, bool full_init, 
-                          Assignment * lift)
+  bool ZchaffView::sat(Expr::IDVector * assump, Assignment * asgn,
+                       Expr::IDVector * crits, GID gid, bool full_init,
+                       Assignment * lift, std::vector<Clause> *,
+                       int * decision_budget)
   {
+    if (decision_budget) {
+      throw std::logic_error("ZchaffView does not support decision_budget");
+    }
+
     SAT_Reset(satMan);
 
     int agid = -1;
@@ -140,7 +145,7 @@ namespace SAT {
           }
           else
             uit++;
-        if (cit != crits->end()) 
+        if (cit != crits->end())
           crits->erase(cit, crits->end());
       }
     }

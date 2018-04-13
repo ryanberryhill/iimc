@@ -115,7 +115,7 @@ void BddTrAttachment::build()
   if (hasBdds())
     return;
   ExprAttachment const * const eat =
-    (ExprAttachment *) _model.constAttachment(Key::EXPR);
+    (ExprAttachment const *) _model.constAttachment(Key::EXPR);
   Expr::Manager::View *v = _model.newView();
   resetBddManager("bdd_tr_timeout");
 
@@ -287,7 +287,7 @@ bool BddTrAttachment::buildGSHTR()
   if (!hasBdds())
     return false;
   ExprAttachment const * const eat =
-    (ExprAttachment *) model().constAttachment(Key::EXPR);
+    (ExprAttachment const *) model().constAttachment(Key::EXPR);
   Expr::Manager::View *v = model().newView();
   v->begin_local();
   try {

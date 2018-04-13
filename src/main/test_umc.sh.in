@@ -1,0 +1,65 @@
+#! /bin/sh
+
+# A simple script to test quip 
+
+EXE=@EXEEXT@
+srcdir=@srcdir@
+aigdir=${srcdir}/examples/quip_tests
+
+verbosity=0
+exitstatus=0
+count=0
+
+for aig in $(find $aigdir -name "*.aig")
+do
+  result_type=$(dirname $aig | xargs basename)
+  expected=0
+  if [ "$result_type" = "unsafe" ] ; then
+    expected=1
+  fi
+  aig_name=$(basename $aig)
+  echo "testing with $aig_name ($result_type)"
+
+  failed=0
+
+  quip_result=`eval "./iimc$EXE -v $verbosity $aig $@" | tail -n1`
+  quip_failed=`expr $? != 0`
+
+  if [ $quip_failed = 0 ]; then
+    if [ "$expected" != "$quip_result" ]; then
+      echo Tactic returned $quip_result, expected $expected
+      failed=1
+    fi
+  else
+    failed=1
+    echo Quip returned non-zero exit status
+  fi
+  exitstatus=`expr $exitstatus + $failed`
+  count=`expr $count + 1`
+done
+
+# Check one that's SAT/unsafe and one that's UNSAT/safe
+for aig in safe/cmugigamax.aig unsafe/oski15a14b01s.aig
+do
+  printf "Checking for memory errors with $aig: "
+  valgrind_cmd="valgrind --leak-check=full --error-exitcode=1 ./iimc$EXE -t quip -v $verbosity $aigdir/$aig $@"
+  valgrind_result=`eval $valgrind_cmd > /dev/null 2>&1`
+  valgrind_failed=`expr $? != 0`
+  
+  if [ $valgrind_failed != 0 ]; then
+    echo "errors detected"
+    echo "Run the following command to replicate the failure: "
+    echo $valgrind_cmd
+  else
+    echo "no errors detected"
+  fi
+  exitstatus=`expr $exitstatus + $valgrind_failed`
+  count=`expr $count + 1`
+done
+echo
+
+
+date +"%m %Y"|cal
+echo "$exitstatus failed sub-tests out of $count"
+
+exit $exitstatus

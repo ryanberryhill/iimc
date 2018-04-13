@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.65])
-AC_INIT([iimc], [2.0])
+AC_INIT([iimc], [2.0-truss])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE(
@@ -117,7 +117,7 @@ AC_SUBST([AM_LDFLAGS])
 
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_FILES([Makefile Doxyfile])
-AC_CONFIG_SUBDIRS([src/cudd src/sat/minisat20 src/sat/zchaff src/sat/minisat])
+AC_CONFIG_SUBDIRS([src/cudd src/sat/minisat20 src/sat/zchaff src/sat/minisat src/sat/picosat src/sat/glucose])
 AC_OUTPUT
 
 echo \

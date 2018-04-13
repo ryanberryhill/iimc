@@ -66,6 +66,12 @@ public:
     }
   };
 
+  /**
+   * WARNING: In several places, non-const CNFAttachments get casted to const
+   * CNFAttachments in order to call this function. Even if it seems to work,
+   * I think it's a bad idea, as the attachments may need to be locked and the
+   * constAttachment function definitely does not do any locking.
+   */
   const std::vector<std::vector<ID> >& getCNF(Expr::Manager::View * ev = NULL) //const
   { 
     ExprAttachment const * const eat = (ExprAttachment const *) _model.constAttachment(Key::EXPR);

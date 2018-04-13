@@ -1,6 +1,8 @@
-SUBDIRS = src/cudd src/sat/minisat20 src/sat/minisat
+SUBDIRS = src/cudd src/sat/minisat20 src/sat/minisat src/sat/picosat src/sat/glucose
+DIST_SUBDIRS = src/cudd src/sat/minisat20 src/sat/minisat src/sat/glucose
 if ZCHAFF
 SUBDIRS += src/sat/zchaff
+DIST_SUBDIRS += src/sat/zchaff
 endif
 ACLOCAL_AMFLAGS = -I m4
 
@@ -8,11 +10,12 @@ bin_PROGRAMS = iimc
 
 ## Each included file adds to these variables as it sees fit. 
 iimc_SOURCES =
-AM_CPPFLAGS = @AM_CPPFLAGS@
+# I'd like to add -Wsuggest-override, but IImc has it everywhere
+AM_CPPFLAGS = @AM_CPPFLAGS@ -Wall -Wpedantic 
 AM_LDFLAGS =
 check_PROGRAMS =
 check_SCRIPTS =
-EXTRA_DIST = LICENSE LICENSE.zchaff examples/aig19 examples/dimacs examples/ctl
+EXTRA_DIST = LICENSE LICENSE.zchaff examples/aig19 examples/dimacs examples/ctl examples/quip_tests src/sat/picosat
 dist_check_DATA =
 TESTS =
 CLEANFILES =
@@ -44,6 +47,7 @@ include $(top_srcdir)/src/cnf/cnf.make
 include $(top_srcdir)/src/properties/properties.make
 include $(top_srcdir)/src/automata/automata.make
 include $(top_srcdir)/src/mc/mc.make
+include $(top_srcdir)/src/umc/umc.make
 include $(top_srcdir)/src/main/main.make
 
 AM_CPPFLAGS += $(BOOST_CPPFLAGS) -I$(top_srcdir)/src/cudd -D __STDC_LIMIT_MACROS -D __STDC_FORMAT_MACROS

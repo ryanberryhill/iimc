@@ -101,10 +101,15 @@ namespace SAT {
     satMan.addClause(~gidLit);
   }
 
-  bool MinisatView::sat(Expr::IDVector * assump, Assignment * asgn, 
-                          Expr::IDVector * crits, GID, bool, 
-                          Assignment * lift)
+  bool MinisatView::sat(Expr::IDVector * assump, Assignment * asgn,
+                          Expr::IDVector * crits, GID, bool,
+                          Assignment * lift, std::vector<Clause> *,
+                          int * decision_budget)
   {
+    if (decision_budget) {
+      throw std::logic_error("MinisatView does not support decision_budget");
+    }
+
     Minisat::vec<Minisat::Lit> assumps;
     for(set<Minisat::Lit>::const_iterator it = _assumps.begin();
         it != _assumps.end(); ++it) {
@@ -178,7 +183,7 @@ namespace SAT {
           }
           else
             uit++;
-        if (cit != crits->end()) 
+        if (cit != crits->end())
           crits->erase(cit, crits->end());
       }
     }

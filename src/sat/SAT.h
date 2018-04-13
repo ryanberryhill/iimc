@@ -52,7 +52,9 @@ namespace SAT {
 #ifndef DISABLE_ZCHAFF
     ZCHAFF,
 #endif
-    MINISAT};
+    MINISAT,
+    PICOSAT,
+    GLUCOSE};
 
   bool isValidBackend(const std::string & backend);
 
@@ -109,11 +111,11 @@ namespace SAT {
      * Expr::Manager::View.
      */
 #ifdef DISABLE_ZCHAFF
-    View * newView(Expr::Manager::View & exprView, Solver solver = MINISAT);
+    View * newView(Expr::Manager::View & exprView, Solver solver = MINISAT, bool picosat_trace_generation=false);
 #else
-    View * newView(Expr::Manager::View & exprView, Solver solver = ZCHAFF);
+    View * newView(Expr::Manager::View & exprView, Solver solver = ZCHAFF, bool picosat_trace_generation=false);
 #endif
-    View * newView(Expr::Manager::View & exprView, std::string solver);
+    View * newView(Expr::Manager::View & exprView, std::string solver, bool picosat_trace_generation=false);
 
     static uint64_t satTime() { return sat_time; }
     static unsigned int satCount() { return sat_count; }
@@ -167,12 +169,14 @@ namespace SAT {
        * implementation; it can only be used when there is when sat()
        * call involving the clause group.
        */
-      virtual bool sat(Expr::IDVector * assumptions = NULL, 
-               Assignment * asgn = NULL, 
-               Expr::IDVector * criticalUnits = NULL, 
+      virtual bool sat(Expr::IDVector * assumptions = NULL,
+               Assignment * asgn = NULL,
+               Expr::IDVector * criticalUnits = NULL,
                GID gid = NULL_GID,
                bool full_init = false,
-               Assignment * lift = NULL) = 0;
+               Assignment * lift = NULL,
+               std::vector<Clause> * core = NULL,
+               int * decision_budget = NULL) = 0;
 
       /**
        * Returns this view's manager.
@@ -183,6 +187,10 @@ namespace SAT {
        * Set this view's maximum allotted solving time.
        */
       virtual void timeout(double to = -1.0) = 0;
+
+      virtual bool supportsCore() { return false; }
+
+      virtual void lockInModel() { assert(false); }
 
     protected:
       View(Manager & _man, Expr::Manager::View & _ev) : man(_man), exprView(_ev) { }

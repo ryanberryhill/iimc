@@ -37,6 +37,8 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "Util.h"
 
 #include "SAT_minisat.h"
+#include "SAT_glucose.h"
+#include "SAT_picosat.h"
 #ifndef DISABLE_ZCHAFF
 #include "SAT_zchaff.h"
 #endif
@@ -56,7 +58,7 @@ namespace SAT {
 #ifndef DISABLE_ZCHAFF
       backend == "zchaff" ||
 #endif
-      backend == "minisat");
+      backend == "minisat" || backend == "picosat" || backend == "glucose");
   }
 
   Solver toSolver(const std::string & backend) {
@@ -67,6 +69,10 @@ namespace SAT {
     if (backend == "zchaff")
       return ZCHAFF;
 #endif
+    if(backend == "picosat")
+      return PICOSAT;
+    if(backend == "glucose")
+      return GLUCOSE;
     assert(false);
   }
 
@@ -98,25 +104,34 @@ namespace SAT {
     return true;
   }
 
-  Manager::View * Manager::newView(Expr::Manager::View & exprView, Solver solver) {
-
-#ifdef DISABLE_ZCHAFF
-    (void) solver; // prevent unused parameter warning
-    View * v = new MinisatView(*this, exprView);
-#else
-    View * v;
-    if (solver == ZCHAFF)
-      v = new ZchaffView(*this, exprView);
-    else
-      v = new MinisatView(*this, exprView);
+  Manager::View * Manager::newView(Expr::Manager::View & exprView, Solver solver, bool picosat_trace_generation) {
+      View * v;
+      switch(solver) {
+#ifndef DISABLE_ZCHAFF
+        case ZCHAFF:
+          v = new ZchaffView(*this, exprView);
+          break;
 #endif
+        case MINISAT:
+          v = new MinisatView(*this, exprView);
+          break;
+        case PICOSAT:
+          v = new PicosatView(*this, exprView, picosat_trace_generation);      
+          break;
+        case GLUCOSE:
+          v = new GlucoseView(*this, exprView);
+          break;
+        default:
+          break;
+      }
+
     views.push_back(v);
     v->add(clauses);
     return v;
   }
 
-  Manager::View * Manager::newView(Expr::Manager::View & exprView, string solver) {
-    return newView(exprView, toSolver(solver));
+  Manager::View * Manager::newView(Expr::Manager::View & exprView, string solver, bool picosat_trace_generation) {
+    return newView(exprView, toSolver(solver), picosat_trace_generation);
   }
 
 

@@ -13,9 +13,15 @@ iimc_SOURCES += $(main_Main_sources)
 AM_CPPFLAGS += -I$(srcdir)/src/main
 
 check_SCRIPTS += test_iimc.sh
+check_SCRIPTS += test_umc.sh
 
 EXTRA_DIST += src/main/test_iimc.sh.in
+EXTRA_DIST += src/main/test_umc.sh.in
 
 test_iimc.sh: src/main/test_iimc.sh.in Makefile
+	$(do_subst) $< > $@
+	chmod +x $@
+    
+test_umc.sh: src/main/test_umc.sh.in Makefile
 	$(do_subst) $< > $@
 	chmod +x $@

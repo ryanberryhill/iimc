@@ -15,7 +15,17 @@ IFS=:
 argslist="\
 -t print_expr -t print_dot -t print_verilog ${aigdir}/counter3.aig > /dev/null,:\
 -t sr -t ic3 ${aigdir}/counter3.aig,0:\
+-t sr -t quip ${aigdir}/counter3.aig,0:\
 -t sr -t ic3 --ic3_xlift --cnf_techmap ${aigdir}/gaxb.aig,0:\
+-t sr -t quip ${aigdir}/gaxb.aig,0:\
+-t sr -t ic3 ${aigdir}/speculate.aig,0:\
+-t sr -t quip ${aigdir}/speculate.aig,0:\
+-t sr -t ic3 ${aigdir}/badStateInput.aig,1:\
+-t sr -t quip ${aigdir}/badStateInput.aig,1:\
+-t sr -t ic3 ${aigdir}/cnt128bits.aig,1:\
+-t sr -t quip ${aigdir}/cnt128bits.aig,1:\
+-t sr -t ic3 ${aigdir}/gcdLTL2.aig,1:\
+-t sr -t quip ${aigdir}/gcdLTL2.aig,1:\
 -t bmc --bmc_bound 10 ${aigdir}/sss.aig,2:\
 -t sr -t bdd_fw_reach --bdd_sweeping ${aigdir}/gaxb.aig,0:\
 -t bddsweep -t fair ${aigdir}/cnt3bits.aig,0:\

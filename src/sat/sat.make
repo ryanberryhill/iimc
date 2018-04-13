@@ -2,7 +2,11 @@ sat_SAT_sources = \
   src/sat/SAT.cpp \
   src/sat/SAT_minisat.cpp \
   src/sat/SAT_minisat.h \
-  src/sat/SAT.h
+  src/sat/SAT_glucose.cpp \
+  src/sat/SAT_glucose.h \
+  src/sat/SAT.h \
+  src/sat/SAT_picosat.h \
+  src/sat/SAT_picosat.cpp
 
 if ZCHAFF
   sat_SAT_sources += \
@@ -14,7 +18,7 @@ iimc_SOURCES += \
   $(sat_SAT_sources)
 
 AM_CPPFLAGS += -Isrc/sat -I$(srcdir)/src/sat
-LDADD += src/sat/minisat20/libminisat20.a src/sat/minisat/libminisat.a 
+LDADD += src/sat/minisat20/libminisat20.a src/sat/minisat/libminisat.a src/sat/picosat/libpicosat.a src/sat/glucose/libglucose.a 
 if ZCHAFF
 LDADD += src/sat/zchaff/libsat.a
 endif
