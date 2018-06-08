@@ -521,7 +521,7 @@ namespace UMC {
       }
 
       // Proven at k, report it externally
-      updateReachabilityBound(k);
+      updateReachabilityBound(k + 1);
 
 #ifdef DEBUG
       for (const Lemma & lem : inductive_trace.getActiveLemmas()) {
