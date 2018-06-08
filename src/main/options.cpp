@@ -281,7 +281,7 @@ namespace Options {
        "BMC option: expand initial condition through simulation")
 
       ("bmc_timeout",
-       value<int>()->default_value(30),
+       value<int>()->default_value(0),
        "BMC option: set timeout")
 
       ("bmc_memlimit",
@@ -333,12 +333,6 @@ namespace Options {
 
       ("ic3_xlift",
        "ic3 option: Disable lifting of CTIs")
-
-      ("ic3_xconsmem",
-       "ic3 option: Disable consecution memory")
-
-      ("ic3_xsubsumption",
-       "ic3 option: Disable use of subsumption reduction")
 
       ("ic3_laggr",
        value<int>()->default_value(0),

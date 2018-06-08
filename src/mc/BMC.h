@@ -55,10 +55,10 @@ POSSIBILITY OF SUCH DAMAGE.
 /** namespace of BMC */
 namespace BMC {
   struct BMCOptions {
-    BMCOptions() : 
-      timeout(-1), memlimit(0), sim(false), useCOI(false), printCex(false), 
+    BMCOptions() :
+      timeout(-1), memlimit(0), sim(false), useCOI(false), printCex(false),
       constraints(NULL), iictl(false), silent(false), proofProc(IC3::STRENGTHEN),
-      am(NULL), action(NULL), ev(NULL), rseed(-1) {}
+      am(NULL), action(NULL), ev(NULL), rseed(-1), backend("") {}
     size_t lo;
     size_t * bound;
     int timeout;
@@ -78,10 +78,11 @@ namespace BMC {
     Model::Action * action;
     Expr::Manager::View * ev;
     int rseed;
+    std::string backend;
   };
 
   // Procedure that performs BMC on the given model with the given bound.
-  MC::ReturnValue check(Model &model, const BMCOptions & opts, 
+  MC::ReturnValue check(Model &model, const BMCOptions & opts,
                         std::vector<Transition> * cexTrace = NULL,
                         std::vector< std::vector<ID> > * proofCNF = NULL,
                         SAT::Clauses * unrolling1 = NULL,
@@ -90,7 +91,8 @@ namespace BMC {
   // Defines the basic BMC tactic.
   class BMCAction : public Model::Action {
   public:
-    BMCAction(Model &m, int rseed=-1) : Model::Action(m), rseed(rseed) {
+    BMCAction(Model &m, int rseed=-1, std::string backend_override="") :
+        Model::Action(m), rseed(rseed), backend_override(backend_override) {
       COIAttachment::Factory caf;
       requires(Key::COI, &caf);
       ExprAttachment::Factory eaf;
@@ -108,6 +110,7 @@ namespace BMC {
   private:
     static ActionRegistrar action;
     int rseed;
+    std::string backend_override;
   };
 }
 

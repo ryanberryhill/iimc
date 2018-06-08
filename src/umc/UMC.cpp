@@ -66,18 +66,60 @@ namespace UMC {
     int num_threads = std::min(thread_limit, hw_threads);
     // Ensure at least equal to the user-provided minimum
     num_threads = std::max(min_threads, (unsigned) num_threads);
-    // Force into the range [1,4]
+    // Force into the range [1, 16]
     num_threads = std::max(num_threads, 1);
-    num_threads = std::min(num_threads, 4);
+    num_threads = std::min(num_threads, 16);
     assert(num_threads > 0);
-    assert(num_threads <= 4);
+    assert(num_threads <= 16);
 
-    if (model().verbosity() > Options::Terse) {
-      std::cout << "Launching " << num_threads << " threads" << std::endl;
+    bool ic3_mode = model().defaultMode() == Model::mIC3;
+
+    // Check for the case where the circuit has no latches and therefore
+    // we should run BMC instead
+    const ExprAttachment * eat = (const ExprAttachment *) model().constAttachment(Key::EXPR);
+    if (ic3_mode && eat->stateVars().empty())
+    {
+        // Do a few threads of BMC
+        num_threads = std::min(num_threads, 8);
+	    int rseed = model().options()["rand"].as<int>();
+        assert(num_threads <= 8);
+        switch (num_threads) {
+          case 8:
+            model().pushFrontTactic(new BMC::BMCAction(model(), rseed + 7, "picosat"));
+          case 7:
+            model().pushFrontTactic(new BMC::BMCAction(model(), rseed + 6, "minisat"));
+          case 6:
+            model().pushFrontTactic(new BMC::BMCAction(model(), rseed + 5, "minisat"));
+#ifdef DISABLE_ZCHAFF
+          case 5:
+            model().pushFrontTactic(new BMC::BMCAction(model(), rseed + 4, "glucose"));
+          case 4:
+            model().pushFrontTactic(new BMC::BMCAction(model(), rseed + 3, "glucose"));
+#else
+          case 5:
+            model().pushFrontTactic(new BMC::BMCAction(model(), rseed + 4, "zchaff"));
+          case 4:
+            model().pushFrontTactic(new BMC::BMCAction(model(), rseed + 3, "zchaff"));
+#endif
+          case 3:
+            model().pushFrontTactic(new BMC::BMCAction(model(), rseed + 2, "glucose"));
+          case 2:
+            model().pushFrontTactic(new BMC::BMCAction(model(), rseed + 1, "glucose"));
+          case 1:
+            model().pushFrontTactic(new BMC::BMCAction(model(), rseed + 0, "glucose"));
+            break;
+          default:
+            assert(false);
+        }
+        model().pushFrontTactic(new Dispatch::Fork(model()));
+        return;
     }
 
     // Only do this stuff in IC3 mode, otherwise defer to IICAction
-    if (model().defaultMode() == Model::mIC3) {
+    if (ic3_mode) {
+      if (model().verbosity() > Options::Terse) {
+        std::cout << "Launching " << num_threads << " threads" << std::endl;
+      }
       switch (num_threads) {
         case 4:
           model().pushFrontTactic(new IC3::IC3Action(model(), false, false, "glucose"));

@@ -457,6 +457,7 @@ namespace UMC {
     ReturnValue trivial_cexrv(MC::CEX);
     trivial_cexrv.cex.push_back(Transition(initCube(), Cube()));
 
+    // Check for the case where the output is a constant
     ID npi = getNPI();
     if (npi == ev->bfalse()) {
       logger.informative() << "The property succeeds trivially." << std::endl;

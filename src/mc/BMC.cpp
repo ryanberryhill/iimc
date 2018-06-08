@@ -62,7 +62,7 @@ namespace {
   class State {
   public:
     State(Model & m, const Clauses & _cnf, const Clauses & _pcnf,
-          const BMC::BMCOptions & opts) : 
+          const BMC::BMCOptions & opts) :
       m(m), opts(opts), _cnf(_cnf), _pcnf(_pcnf) {
       if (opts.ev) {
         v = opts.ev;
@@ -205,15 +205,15 @@ namespace {
     void simulate(unsigned int nRuns, unsigned int depth, set<ID> & sim_cubes) {
       class ISim : public Sim::StateFunctor64 {
       public:
-        ISim(State & s, unsigned int nRuns, set<ID> & sim_cubes) : 
-          s(s), 
-          nRuns(64 < nRuns ? 64 : nRuns), 
-          sim_cubes(sim_cubes) 
+        ISim(State & s, unsigned int nRuns, set<ID> & sim_cubes) :
+          s(s),
+          nRuns(64 < nRuns ? 64 : nRuns),
+          sim_cubes(sim_cubes)
         {}
         virtual bool operator()(vector<uint64_t>::const_iterator stateBegin, vector<uint64_t>::const_iterator stateEnd) {
           vector<ID> st[64];
           const vector<ID> & latches = s.latches;
-          for (vector<ID>::const_iterator lit = latches.begin(); 
+          for (vector<ID>::const_iterator lit = latches.begin();
                stateBegin != stateEnd; stateBegin++, lit++) {
             assert (lit != latches.end());
             uint64_t v = *stateBegin;
@@ -268,7 +268,7 @@ namespace {
         for (Clause::const_iterator it = _cnf[i].begin(); it != _cnf[i].end(); ++it) {
           LitOccurMap::iterator sit = lito.find(*it);
           if (sit == lito.end()) {
-            pair<LitOccurMap::iterator, bool> rv = 
+            pair<LitOccurMap::iterator, bool> rv =
               lito.insert(LitOccurMap::value_type(*it, Indexes()));
             sit = rv.first;
           }
@@ -283,7 +283,7 @@ namespace {
     void _add_clauses(deque<unsigned int> & q, ID lit) {
       LitOccurMap::const_iterator litit = lito.find(lit);
       if (litit != lito.end())
-        for (Indexes::const_iterator iit = litit->second.begin(); 
+        for (Indexes::const_iterator iit = litit->second.begin();
              iit != litit->second.end(); ++iit)
           if (fmarked.find(*iit) == fmarked.end()) {
             q.push_back(*iit);
@@ -306,13 +306,13 @@ namespace {
         // 1. clear satisfied clauses
         LitOccurMap::const_iterator litit = lito.find(lit);
         if (litit != lito.end())
-          for (Indexes::const_iterator iit = litit->second.begin(); 
+          for (Indexes::const_iterator iit = litit->second.begin();
                iit != litit->second.end(); ++iit)
             cnf[*iit].clear();
         // 2. falsify neg of lit and obtain any new units
         litit = lito.find(nlit);
         if (litit != lito.end())
-          for (Indexes::const_iterator iit = litit->second.begin(); 
+          for (Indexes::const_iterator iit = litit->second.begin();
                iit != litit->second.end(); ++iit) {
             if (cnf[*iit].size() == 0) continue;
             for (Clause::iterator it = cnf[*iit].begin(); it != cnf[*iit].end(); ++it)
@@ -368,7 +368,7 @@ namespace {
 
 namespace BMC {
 
-  MC::ReturnValue check(Model & m, const BMCOptions & opts, 
+  MC::ReturnValue check(Model & m, const BMCOptions & opts,
                         vector<Transition> * cexTrace,
                         vector< vector<ID> > * proofCNF,
                         SAT::Clauses * unrolling1, SAT::Clauses * unrolling2) {
@@ -444,11 +444,11 @@ namespace BMC {
 
     if(opts.constraints) {
       for (unsigned i = 0; i < opts.constraints->size(); ++i) {
-        cons_clauses.insert(cons_clauses.end(), 
+        cons_clauses.insert(cons_clauses.end(),
                             (*opts.constraints)[i].begin(),
                             (*opts.constraints)[i].end());
         if (!pcons_clauses.empty())
-          pcons_clauses.insert(pcons_clauses.end(), 
+          pcons_clauses.insert(pcons_clauses.end(),
                                (*opts.constraints)[i].begin(),
                                (*opts.constraints)[i].end());
       }
@@ -476,7 +476,11 @@ namespace BMC {
 
     State s(m, cons_clauses, pcons_clauses, opts);
     SAT::Manager * sman = m.newSATManager();
-    string backend = m.options()["bmc_backend"].as<string>();
+    string backend = opts.backend;
+    if (backend.empty()) {
+      backend = m.options()["bmc_backend"].as<string>();
+    }
+
     if (m.verbosity() > Options::Terse)
       cout << "BMC: Using " << backend << " as backend" << endl;
     SAT::Manager::View * sv = sman->newView(s.view(), SAT::toSolver(backend));
@@ -515,7 +519,7 @@ namespace BMC {
       Expr::tseitin(s.view(), v->apply(Expr::Or, ic), ic_cnf);
       cout << ic_cnf.size() << endl;
       sv->add(ic_cnf);
-      if (unrolling1) 
+      if (unrolling1)
         unrolling1->insert(unrolling1->end(), ic_cnf.begin(), ic_cnf.end());
     }
 
@@ -572,8 +576,8 @@ namespace BMC {
         if (use_frontier) s.nextFrontier();
         Clauses new_cnf;
         bool trivial = false;
-        for (unsigned int i = k; 
-             i == k || (use_frontier && i > 0 && k-i < s.fsize()); 
+        for (unsigned int i = k;
+             i == k || (use_frontier && i > 0 && k-i < s.fsize());
              --i) {
           Clauses icnf = s.cnf(k-i, use_frontier);
           if (!opts.sim) {
@@ -787,7 +791,7 @@ namespace BMC {
             for (SAT::Assignment::const_iterator i = asgn.begin(); i != asgn.end(); ++i)
               if (i->second != SAT::Unknown) {
                 ID var = v->primeTo(i->first, 0);
-                cube.push_back(i->second == SAT::False ? 
+                cube.push_back(i->second == SAT::False ?
                                v->apply(Expr::Not, var) :
                                var);
               }
@@ -814,7 +818,7 @@ namespace BMC {
         Expr::primeFormulas(*v, *i, -(*(opts.bound)-1));
 
     *(opts.bound) = k;
-    
+
     if (!opts.ev) {
       v->end_local();
       delete v;
@@ -844,6 +848,8 @@ namespace BMC {
       RchAttachment const * const rat = (RchAttachment const *) model().constAttachment(Key::RCH);
       opts.lo = rat->cexLowerBound();
       opts.rseed = (rseed != -1) ? rseed : options()["rand"].as<int>();
+      opts.backend = backend_override.empty() ? options()["bmc_backend"].as<string>() :
+                                                backend_override;
 
       Expr::Manager::View * ev = model().newView();
       SAT::Clauses fwd;
