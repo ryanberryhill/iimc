@@ -3,6 +3,7 @@
 #include "UMCEngine.h"
 #include "Quip.h"
 #include "Truss.h"
+#include "UMCIC3.h"
 #include "BMC.h"
 #include "Dispatch.h"
 #include "IC3.h"
@@ -120,15 +121,72 @@ namespace UMC {
       if (model().verbosity() > Options::Terse) {
         std::cout << "Launching " << num_threads << " threads" << std::endl;
       }
+
+      UMCOptions opts8, opts9, opts10, opts11, opts12, opts13, opts14, opts15;
+	  int rseed = model().options()["rand"].as<int>();
+
       switch (num_threads) {
+        case 16:
+          // The other IC3 engine
+          model().pushFrontTactic(new UMC::UMCSolverAction<UMC::IC3Solver>(model(), 16));
+        case 15:
+          // Quip without CTGs
+          opts15.num_ctgs = 0;
+          opts15.ctg_depth = 0;
+          model().pushFrontTactic(new UMC::UMCSolverAction<UMC::QuipSolver>(model(), opts15, 15));
+        case 14:
+          // Truss without CTGs
+          opts14.num_ctgs = 0;
+          opts14.ctg_depth = 0;
+          model().pushFrontTactic(new UMC::UMCSolverAction<UMC::TrussSolver>(model(), opts14, 14));
+        case 13:
+          // Quip with PDR-style generalization and minisat
+          opts13.backend = "minisat";
+          opts13.gen = "iter";
+          model().pushFrontTactic(new UMC::UMCSolverAction<UMC::QuipSolver>(model(), opts13, 13));
+        case 12:
+          // Quip with PDR-style generalization
+          opts12.backend = "minisat";
+          opts12.gen = "iter";
+          model().pushFrontTactic(new UMC::UMCSolverAction<UMC::QuipSolver>(model(), opts12, 12));
+        case 11:
+          // Truss with PDR-style generalization and minisat
+          opts11.backend = "minisat";
+          opts11.gen = "iter";
+          model().pushFrontTactic(new UMC::UMCSolverAction<UMC::TrussSolver>(model(), opts11, 11));
+        case 10:
+          // Truss with PDR-style generalization
+          opts10.gen = "iter";
+          model().pushFrontTactic(new UMC::UMCSolverAction<UMC::TrussSolver>(model(), opts10, 10));
+        case 9:
+          // Quip with minisat
+          opts9.backend = "minisat";
+          model().pushFrontTactic(new UMC::UMCSolverAction<UMC::QuipSolver>(model(), opts9, 9));
+        case 8:
+          // Truss with minisat
+          opts8.backend = "minisat";
+          model().pushFrontTactic(new UMC::UMCSolverAction<UMC::TrussSolver>(model(), opts8, 8));
+        case 7:
+          // IC3 default with minisat + different random seed
+          model().pushFrontTactic(new IC3::IC3Action(model(), false, false, "minisat", rseed + 3));
+        case 6:
+          // IC3 default with glucose + different random seed
+          model().pushFrontTactic(new IC3::IC3Action(model(), false, false, "glucose", rseed + 2));
+        case 5:
+          // IC3 default with minisat
+          model().pushFrontTactic(new IC3::IC3Action(model(), false, false, "minisat", rseed + 1));
         case 4:
-          model().pushFrontTactic(new IC3::IC3Action(model(), false, false, "glucose"));
+          // IC3 default with glucose
+          model().pushFrontTactic(new IC3::IC3Action(model(), false, false, "glucose", rseed + 0));
         case 3:
-          model().pushFrontTactic(new UMC::UMCSolverAction<UMC::QuipSolver>(model()));
+          // Quip default options
+          model().pushFrontTactic(new UMC::UMCSolverAction<UMC::QuipSolver>(model(), 3));
         case 2:
+          // BMC
           model().pushFrontTactic(new BMC::BMCAction(model()));
         case 1:
-          model().pushFrontTactic(new UMC::UMCSolverAction<UMC::TrussSolver>(model()));
+          // Truss default options
+          model().pushFrontTactic(new UMC::UMCSolverAction<UMC::TrussSolver>(model(), 1));
           break;
         default:
           assert(false);

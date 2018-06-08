@@ -270,7 +270,7 @@ namespace Options {
        "Minimum hardware concurrency to run standard tactic multi-threaded.")
 
       ("thread_limit",
-       value<unsigned long>()->default_value(8),
+       value<unsigned long>()->default_value(16),
        "Maximum number of threads when running standard multi-threaded tactic.")
 
       ("bmc_bound",

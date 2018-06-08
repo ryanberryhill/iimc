@@ -286,7 +286,23 @@ namespace UMC {
   class UMCSolverAction : public Model::Action {
   public:
 
-    UMCSolverAction(Model & m) : Model::Action(m)
+    UMCSolverAction(Model & m, unsigned id = 0) :
+        Model::Action(m), opts(options()), id(id)
+    {
+      ExprAttachment::Factory eaf;
+      requires(Key::EXPR, &eaf);
+      COIAttachment::Factory caf;
+      requires(Key::COI, &caf);
+      RchAttachment::Factory raf;
+      requires(Key::RCH, &raf);
+      ProofAttachment::Factory paf;
+      requires(Key::PROOF, &paf);
+      CNFAttachment::Factory cnfaf;
+      requires(Key::CNF, &cnfaf);
+    }
+
+    UMCSolverAction(Model & m, const UMCOptions & opts, unsigned id = 0) :
+        Model::Action(m), opts(opts), id(id)
     {
       ExprAttachment::Factory eaf;
       requires(Key::EXPR, &eaf);
@@ -304,6 +320,8 @@ namespace UMC {
 
   private:
     static ActionRegistrar action;
+    UMCOptions opts;
+    unsigned id;
   };
 
   template<class Solver>
