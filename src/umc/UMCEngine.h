@@ -146,7 +146,10 @@ namespace UMC {
       virtual void onDischarge(ProofObligation & po, const Cube & t, int g);
       // Called when the obligation has a predecessor. Should enqueue an
       // obligation for the predecessor state
-      virtual void onPredecessor(ProofObligation & po, const Cube & inputs, const Cube & pred);
+      virtual void onPredecessor(ProofObligation & po,
+                                 const Cube & inputs,
+                                 const Cube & pinputs,
+                                 const Cube & pred);
       // Called when a lemma is deleted (e.g., through infinity reduction)
       virtual void onDeleteLemma(CubeID id)
       { (void) id; }
@@ -174,6 +177,7 @@ namespace UMC {
       virtual std::pair<Cube, int> syntacticBlock(const ProofObligation & po);
       virtual std::pair<Cube, int> block(ProofObligation & po,
                                          Cube * inputs = NULL,
+                                         Cube * pinputs = NULL,
                                          Cube * concrete_state = NULL);
       virtual ReturnValue checkTrivial();
       virtual ReturnValue prove();

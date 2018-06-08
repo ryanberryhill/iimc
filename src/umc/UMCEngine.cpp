@@ -72,10 +72,27 @@ namespace UMC {
    * Default IC3-style behavior (though probably common to all solvers)
    * Add an obligation for the predecessor and re-enqueue the original.
    */
-  void UMCEngine::onPredecessor(ProofObligation & po, const Cube & inputs, const Cube & pred) {
+  void UMCEngine::onPredecessor(ProofObligation & po,
+                                const Cube & inputs,
+                                const Cube & pinputs,
+                                const Cube & pred) {
     ProofObligation & next_po = newObligation(pred, po.level - 1, &po);
     next_po.type = po.type;
     next_po.inputs = inputs;
+
+    // For counter-example generation sometimes its important to enforce the
+    // primed inputs that relate to the state before the unsafe state.
+    // In this case where the obligation is for !Bad, po.inputs will be empty,
+    // so set them to the primed inputs from the child obligation (unpriming
+    // them in the process).
+    if (po.inputs.empty())
+    {
+        for (ID id : pinputs)
+        {
+            po.inputs.push_back(ev->unprime(id));
+        }
+    }
+
     pushObligation(next_po);
     pushObligation(po);
   }
@@ -283,7 +300,10 @@ namespace UMC {
    * If s cannot be blocked, returns a predecessor cube of s and g = k-1.
    * Guarantees that the returned cube is sorted
    */
-  std::pair<Cube, int> UMCEngine::block(ProofObligation & po, Cube * inputs, Cube * concrete_state)
+  std::pair<Cube, int> UMCEngine::block(ProofObligation & po,
+                                        Cube * inputs,
+                                        Cube * pinputs,
+                                        Cube * concrete_state)
   {
     const Cube & s = po.cube;
     int k = po.level;
@@ -330,8 +350,9 @@ namespace UMC {
       // Extract and return predecessor state t and optionally concrete_state
       // (the concrete s-state involved in the assignment)
       // pinp = primed inputs (forced by s)
-      Cube t, local_inputs, pinp;
+      Cube t, local_inputs, local_pinputs;
       Cube & inp = inputs ? *inputs : local_inputs;
+      Cube & pinp = pinputs ? *pinputs : local_pinputs;
 
       getCubesFromAsgn(asgn, &t, &inp, &pinp, concrete_state);
       std::sort(t.begin(), t.end());
@@ -490,6 +511,8 @@ namespace UMC {
       return rv;
     }
 
+    updateReachabilityBound(1);
+
     // Initial states are not bad, so add the cube here
     addCube(bad_cube, 0);
     const Lemma & bad_lemma = getActiveLemma(bad_cube);
@@ -618,10 +641,10 @@ namespace UMC {
         continue;
       }
 
-      Cube inputs, cex_state;
+      Cube inputs, pinputs, cex_state;
       Cube t;
       int g;
-      std::tie(t, g) = block(po, &inputs, &cex_state);
+      std::tie(t, g) = block(po, &inputs, &pinputs, &cex_state);
       assert(!t.empty());
 
       if (g != po.level - 1) {
@@ -631,7 +654,7 @@ namespace UMC {
       else {
         // t is a predecessor of the obligation's CTI
         po.cex_state = cex_state;
-        onPredecessor(po, inputs, t);
+        onPredecessor(po, inputs, pinputs, t);
       }
     }
 
