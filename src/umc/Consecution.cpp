@@ -210,10 +210,7 @@ namespace UMC {
     Expr::tseitin(ev, p_eq_bad_prime, pprime_clauses);
     Expr::tseitin(ev, p_eq_bad, p_clauses);
 
-    // TODO: The Slice action can introduce constraints. I think we handle them
-    // correctly but something else goes wrong in Quip.
-    //constraint_clauses = getConstraintClauses();
-    assert(eat->constraints().empty());
+    constraint_clauses = getConstraintClauses();
 
     assert(!clauses.empty());
     assert(!p_clauses.empty());
@@ -222,6 +219,7 @@ namespace UMC {
     tr_clauses.insert(tr_clauses.end(), clauses.begin(), clauses.end());
     tr_clauses.insert(tr_clauses.end(), p_clauses.begin(), p_clauses.end());
     tr_clauses.insert(tr_clauses.end(), pprime_clauses.begin(), pprime_clauses.end());
+    tr_clauses.insert(tr_clauses.end(), constraint_clauses.begin(), constraint_clauses.end());
 
     model.constRelease(eat);
     model.release(cnfat);

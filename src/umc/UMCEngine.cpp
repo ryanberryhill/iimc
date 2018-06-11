@@ -115,6 +115,27 @@ namespace UMC {
 
     initiation_checker.setInit(initially);
 
+    // Check for the case where there are constraints and they are a function
+    // of primary inputs. In this case, lifting must be disabled
+    if (opts.lift) {
+      std::vector<ID> constraintFns = eat->constraintFns();
+      // TODO handle lifting and constraints properly. For now, just disable
+      // lifting when constraints are present
+      if (!constraintFns.empty()) { opts.lift = false; }
+#if 0
+      std::set<ID> constraintVars;
+      Expr::variables(*ev, constraintFns, constraintVars);
+      for (ID var : constraintVars) {
+        logger.terse() << pc({var}) << std::endl;
+        if (eat->isInput(var)) {
+          opts.lift = false;
+          logger.terse() << "Disabling lifting due to input-dependent constraints" << std::endl;
+          break;
+        }
+      }
+#endif
+    }
+
     model().constRelease(eat);
 
     // Handle the absence of a COIAttachment gracefully by assuming all

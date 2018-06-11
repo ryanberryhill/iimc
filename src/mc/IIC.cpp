@@ -88,7 +88,7 @@ namespace {
     }
     return rv;
   }
- 
+
   void composeAutomaton(Model & m, ExprAttachment * eat) {
     //TODO: Add invariant constraints expressing unreachability of certain
     //automaton states
@@ -406,7 +406,7 @@ namespace IIC {
         model().setOptionValue("ic3r_timeout", -1);
         model().setOption("ic3_lift");
         // Schedule actions.
-	model().pushFrontTactic(new Dispatch::Join(model()));	
+	model().pushFrontTactic(new Dispatch::Join(model()));
 	if ((numvars < varlimit) && (nthreads > 3)) {  // BDD_FW
 	  if (model().verbosity() > Options::Terse)
 	    cout << "Scheduling tactic BddFwReach." << endl;
@@ -435,13 +435,13 @@ namespace IIC {
 	    model().pushFrontTactic(new IC3::IC3Action(model(), false, false,
 						       defBackE, 3, rseed+1));
 	  case 7 :   // IC3R - miniSAT
-	    model().pushFrontTactic(new IC3::IC3Action(model(), true, false, 
+	    model().pushFrontTactic(new IC3::IC3Action(model(), true, false,
 						       "minisat"));
 	  case 6 :   // IC3 - CTG 0
-	    model().pushFrontTactic(new IC3::IC3Action(model(), false, false, 
+	    model().pushFrontTactic(new IC3::IC3Action(model(), false, false,
 						       defBackE, 0));
 	  case 5 :   // IC3 - miniSAT
-	    model().pushFrontTactic(new IC3::IC3Action(model(), false, false, 
+	    model().pushFrontTactic(new IC3::IC3Action(model(), false, false,
 						       "minisat"));
 	  case 4 :   // IC3lr
 	    model().pushFrontTactic(new IC3::IC3Action(model(), false, true));
@@ -607,12 +607,11 @@ namespace IIC {
       model().pushFrontTactic(new IIC::StandardOptionsAction(model()));
     } else {
       model().pushFrontTactic(new UMC::UMCAction(model()));
-      // TODO: slice action messes up Quip for some reason
-      //model().pushFrontTactic(new SliceAction(model()));
-      //model().pushFrontTactic(new IIC::PreProcessAction(model()));
-      //model().pushFrontTactic(new PhaseAbstractionAction(model()));
-      //model().pushFrontTactic(new IIC::PreProcessAction(model()));
-      //model().pushFrontTactic(new DecodeAction(model()));
+      model().pushFrontTactic(new SliceAction(model()));
+      model().pushFrontTactic(new IIC::PreProcessAction(model()));
+      model().pushFrontTactic(new PhaseAbstractionAction(model()));
+      model().pushFrontTactic(new IIC::PreProcessAction(model()));
+      model().pushFrontTactic(new DecodeAction(model()));
       model().pushFrontTactic(new IIC::StandardOptionsAction(model()));
     }
   }
