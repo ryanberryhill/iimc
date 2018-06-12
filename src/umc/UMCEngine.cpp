@@ -778,6 +778,8 @@ namespace UMC {
         std::sort(reduced.begin(), reduced.end());
 #ifdef DEBUG
         assert(subsumes(cube, reduced));
+        assert(!reduced.empty());
+        assert(consecution(reduced, INT_MAX));
 #endif
 
         assert(reduced.size() <= cube.size());

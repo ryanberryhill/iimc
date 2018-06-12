@@ -12,7 +12,8 @@ namespace UMC {
                          const EngineGlobalState & gs,
                          std::set<ID> init_state,
                          ID property,
-                         ID bad)
+                         ID bad,
+                         bool constraints)
     : badvar(bad),
       property(property),
       stale(false),
@@ -26,7 +27,7 @@ namespace UMC {
       initiation_checker(gs.initiation_checker)
   {
     inductive_trace.registerConsecutionChecker(*this);
-    constructTR();
+    constructTR(constraints);
   }
 
 
@@ -149,33 +150,22 @@ namespace UMC {
    */
   std::vector<Clause> ConsecutionChecker::getConstraintClauses() {
     const ExprAttachment * eat = (const ExprAttachment *) model.constAttachment(Key::EXPR);
-    const auto & constraints = eat->constraintFns();
     std::vector<Clause> constraint_clauses;
+    assert(eat->constraintFns().empty());
+#if 0
+    auto constraints = eat->constraintFns();
+    auto pconstraints = constraints;
+    Expr::primeFormulas(ev, pconstraints);
+    constraints.insert(constraints.end(), pconstraints.begin(), pconstraints.end());
 
     if (!constraints.empty()) {
-      // Construct a map from latches to their Boolean values in the initial
-      // state. This is used to see if constraints reduce to primitive true or
-      // false
-      Expr::IDMap initial;
-      for (auto it = initially.begin(); it != initially.end(); ++it) {
-        ID latch = toVar(*it);
-        ID latch_value = (latch == *it ? ev.btrue() : ev.bfalse());
-        initial.insert(std::make_pair(latch, latch_value));
-      }
-
-      for (auto it = constraints.begin(); it != constraints.end(); ++it) {
-        ID fn = *it;
-        ID sub = varSub(ev, initial, fn);
-        if (sub == ev.btrue()) { continue; }
-        // if the constraint is equal to bfalse the problem is trivially safe.
-        // We won't find it here, but the solver will quickly figure it out.
-        Expr::tseitin(ev, fn, constraint_clauses);
-        // IC3 also does a semantic check using SAT to see if the constraint
-        // isn't implied by the initial state, but we don't have that here
+      for (ID id : constraints) {
+        Expr::tseitin(ev, id, constraint_clauses);
       }
     }
 
     model.constRelease(eat);
+#endif
     return constraint_clauses;
   }
 
@@ -185,7 +175,7 @@ namespace UMC {
    * next-states, inputs, and outputs (?)) is augmented with two additional
    * expressons. These expressions are (bad = property) and (bad' = property').
    */
-  void ConsecutionChecker::constructTR() {
+  void ConsecutionChecker::constructTR(bool constraints) {
     cleanupTR();
     auto cnfat = model.attachment<CNFAttachment>(Key::CNF);
     const ExprAttachment * eat = (const ExprAttachment *) model.constAttachment(Key::EXPR);
@@ -206,11 +196,13 @@ namespace UMC {
     ID p_eq_bad_prime = ev.apply(Expr::Equiv, badprime, pprime);
 
     // Plain CNF is just the transition relation
-    clauses = cnfat->getPlainCNF();
+    clauses = cnfat->getPlainCNFNoConstraints();
     Expr::tseitin(ev, p_eq_bad_prime, pprime_clauses);
     Expr::tseitin(ev, p_eq_bad, p_clauses);
 
-    constraint_clauses = getConstraintClauses();
+    if (constraints) {
+      constraint_clauses = getConstraintClauses();
+    }
 
     assert(!clauses.empty());
     assert(!p_clauses.empty());

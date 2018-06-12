@@ -499,6 +499,7 @@ namespace UMC {
     int gen_budget;
     int lift_budget;
     int clear_queue_threshold;
+    bool check_proof;
 
     UMCOptions() :  backend("glucose"),
                     primary_cons("multi"),
@@ -532,7 +533,8 @@ namespace UMC {
                     gen_fails(-1),
                     gen_budget(-1),
                     lift_budget(-1),
-                    clear_queue_threshold(INT_MAX)
+                    clear_queue_threshold(INT_MAX),
+                    check_proof(true)
     { }
 
     UMCOptions(

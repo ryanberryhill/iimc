@@ -6,6 +6,14 @@ namespace UMC {
     return cubeContains(negateCube(ev, cube), init);
   }
 
+  InitiationChecker::InitiationChecker(const Model & m,
+                                       Expr::Manager::View & ev,
+                                       std::set<ID> initially)
+        : m(m),
+          ev(ev),
+          initially(initially)
+  { }
+
   void InitiationChecker::setInit(const Cube & init) {
     std::set<ID> init_set(init.begin(), init.end());
     setInit(init_set);

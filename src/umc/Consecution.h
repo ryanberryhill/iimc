@@ -53,7 +53,7 @@ namespace UMC {
       LemmaFilter filter;
       bool stale;
 
-      void constructTR();
+      void constructTR(bool constraints);
       void cleanupTR();
       void initBad();
       std::vector<Clause> getConstraintClauses();
@@ -120,7 +120,8 @@ namespace UMC {
       ConsecutionChecker(const EngineGlobalState & gs,
                          std::set<ID> init_state,
                          ID property,
-                         ID bad);
+                         ID bad,
+                         bool constraints = true);
 
       virtual ~ConsecutionChecker()
       {
@@ -182,8 +183,9 @@ namespace UMC {
       LevelBasedConsecutionChecker(const EngineGlobalState & gs,
                                    std::set<ID> init_state,
                                    ID property,
-                                   ID bad)
-        : ConsecutionChecker(gs, init_state, property, bad)
+                                   ID bad,
+                                   bool constraints = true)
+        : ConsecutionChecker(gs, init_state, property, bad, constraints)
       { }
 
       // It's unfortunately necessary (or at least reasonable) to have the
@@ -208,8 +210,9 @@ namespace UMC {
       InfOnlyConsecutionChecker(const EngineGlobalState & gs,
                                 std::set<ID> init_state,
                                 ID property,
-                                ID bad)
-        : LevelBasedConsecutionChecker(gs, init_state, property, bad)
+                                ID bad,
+                                bool constraints = true)
+        : LevelBasedConsecutionChecker(gs, init_state, property, bad, constraints)
       { }
   };
 
@@ -242,7 +245,7 @@ namespace UMC {
                       std::set<ID> init_state,
                       ID property,
                       ID bad)
-        : InfOnlyConsecutionChecker(gs, init_state, property, bad)
+        : InfOnlyConsecutionChecker(gs, init_state, property, bad, false)
       { }
 
       virtual bool doConsecution(ConsecutionOpts & opts) override;

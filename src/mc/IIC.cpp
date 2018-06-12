@@ -607,7 +607,9 @@ namespace IIC {
       model().pushFrontTactic(new IIC::StandardOptionsAction(model()));
     } else {
       model().pushFrontTactic(new UMC::UMCAction(model()));
-      model().pushFrontTactic(new SliceAction(model()));
+      // The SliceAction introduces constraints which overall seems
+      // like more trouble than it's worth
+      //model().pushFrontTactic(new SliceAction(model()));
       model().pushFrontTactic(new IIC::PreProcessAction(model()));
       model().pushFrontTactic(new PhaseAbstractionAction(model()));
       model().pushFrontTactic(new IIC::PreProcessAction(model()));

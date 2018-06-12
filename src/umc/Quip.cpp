@@ -343,11 +343,11 @@ namespace UMC {
       obl->failed = true;
       stats.may_fail++;
 
-      if(isKnownLemma(obl->cube)) {
+      if (isKnownLemma(obl->cube)) {
         markBad(obl->cube);
       }
 
-      if(obl->parent) {
+      if (obl->parent) {
         ReachableState * r_new = extractReachable(*obl, r->state);
         r_new->pre = r;
         r = r_new;
