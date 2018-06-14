@@ -60,6 +60,7 @@ namespace UMC {
   Logger null_log;
 
   void UMCAction::exec() {
+    bool force_umc = model().options().count("new_hwmcc");
     const unsigned hw_threads = std::thread::hardware_concurrency();
     const unsigned min_threads = model().options()["min_threads"].as<unsigned long>();
     const unsigned thread_limit = model().options()["thread_limit"].as<unsigned long>();
@@ -77,7 +78,18 @@ namespace UMC {
 
     // Check for the case where the circuit has no latches and therefore
     // we should run BMC instead
+    bool hard_constraints = false;
     const ExprAttachment * eat = (const ExprAttachment *) model().constAttachment(Key::EXPR);
+
+    for (ID fn : eat->constraintFns())
+    {
+      if (!eat->isSoftConstraint(fn))
+      {
+        hard_constraints = true;
+        break;
+      }
+    }
+
     if (ic3_mode && eat->stateVars().empty())
     {
         // Do a few threads of BMC
@@ -117,8 +129,11 @@ namespace UMC {
     }
 
     // Only do this stuff in IC3 mode, otherwise defer to IICAction
-    if (ic3_mode) {
+    // Unless the --new_hwmcc option is present, defer to IIC if we have
+    // hard constraints (whether from AIG or circuit simplification passes)
+    if (ic3_mode && (!hard_constraints || force_umc)) {
       if (model().verbosity() > Options::Terse) {
+        std::cout << "Using new competition strategy" << std::endl;
         std::cout << "Launching " << num_threads << " threads" << std::endl;
       }
 
@@ -128,7 +143,9 @@ namespace UMC {
       switch (num_threads) {
         case 16:
           // The other IC3 engine
-          model().pushFrontTactic(new UMC::UMCSolverAction<UMC::IC3Solver>(model(), 16));
+          // It's probably better not to run this since it's poorly-tested and
+          // probably not very performant.
+          //model().pushFrontTactic(new UMC::UMCSolverAction<UMC::IC3Solver>(model(), 16));
         case 15:
           // Quip without CTGs
           opts15.num_ctgs = 0;
@@ -179,11 +196,11 @@ namespace UMC {
           // IC3 default with glucose
           model().pushFrontTactic(new IC3::IC3Action(model(), false, false, "glucose", rseed + 0));
         case 3:
-          // Quip default options
-          model().pushFrontTactic(new UMC::UMCSolverAction<UMC::QuipSolver>(model(), 3));
-        case 2:
           // BMC
           model().pushFrontTactic(new BMC::BMCAction(model()));
+        case 2:
+          // Quip default options
+          model().pushFrontTactic(new UMC::UMCSolverAction<UMC::QuipSolver>(model(), 3));
         case 1:
           // Truss default options
           model().pushFrontTactic(new UMC::UMCSolverAction<UMC::TrussSolver>(model(), 1));
@@ -193,6 +210,9 @@ namespace UMC {
       }
       model().pushFrontTactic(new Dispatch::Fork(model()));
     } else {
+      if (model().verbosity() > Options::Terse) {
+        std::cout << "Using original competition strategy" << std::endl;
+      }
       model().pushFrontTactic(new IIC::IICAction(model()));
     }
   }

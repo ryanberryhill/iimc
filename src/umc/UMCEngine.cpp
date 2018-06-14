@@ -121,8 +121,6 @@ namespace UMC {
       std::vector<ID> constraintFns = eat->constraintFns();
       // TODO handle lifting and constraints properly. For now, just disable
       // lifting when constraints are present
-      if (!constraintFns.empty()) { opts.lift = false; }
-#if 0
       std::set<ID> constraintVars;
       Expr::variables(*ev, constraintFns, constraintVars);
       for (ID var : constraintVars) {
@@ -133,7 +131,17 @@ namespace UMC {
           break;
         }
       }
-#endif
+
+      // We also can't handle hard constraints
+      for (ID fn : constraintFns)
+      {
+        if (eat->isSoftConstraint(fn)) {
+          //handleSoftConstraint(fn);
+        } else {
+          opts.lift = false;
+          logger.terse() << "Disabling lifting due to hard constraints" << std::endl;
+        }
+      }
     }
 
     model().constRelease(eat);
@@ -521,6 +529,13 @@ namespace UMC {
 
   ReturnValue UMCEngine::prove()
   {
+#ifdef DEBUG
+    for (const Lemma & lem : inductive_trace.getActiveLemmas()) {
+      assert(!lem.getCube().empty());
+      if (lem.level == 0) { continue; }
+      assert(consecution(lem.getCube(), lem.level - (lem.level == INT_MAX ? 0 : 1)));
+    }
+#endif
     Cube bad_cube = badCube();
     ReturnValue rv = ReturnValue(MC::Unknown);
     logger.informative() << "Trying to block cube " << pc(bad_cube) << std::endl;
@@ -569,6 +584,7 @@ namespace UMC {
 
 #ifdef DEBUG
       for (const Lemma & lem : inductive_trace.getActiveLemmas()) {
+        assert(!lem.getCube().empty());
         if (lem.level == 0) { continue; }
         assert(consecution(lem.getCube(), lem.level - (lem.level == INT_MAX ? 0 : 1)));
       }
@@ -581,6 +597,7 @@ namespace UMC {
 #ifdef DEBUG
       renew();
       for (const Lemma & lem : inductive_trace.getActiveLemmas()) {
+        assert(!lem.getCube().empty());
         if (lem.level == 0) { continue; }
         assert(consecution(lem.getCube(), lem.level - (lem.level == INT_MAX ? 0 : 1)));
       }
@@ -593,6 +610,7 @@ namespace UMC {
 #ifdef DEBUG
       renew();
       for (const Lemma & lem : inductive_trace.getActiveLemmas()) {
+        assert(!lem.getCube().empty());
         if (lem.level == 0) { continue; }
         assert(consecution(lem.getCube(), lem.level - (lem.level == INT_MAX ? 0 : 1)));
       }
@@ -603,6 +621,7 @@ namespace UMC {
 
 #ifdef DEBUG
       for (const Lemma & lem : inductive_trace.getActiveLemmas()) {
+        assert(!lem.getCube().empty());
         if (lem.level == 0) { continue; }
         int level = lem.level - (lem.level == INT_MAX ? 0 : 1);
         assert(consecution(lem.getCube(), level));

@@ -229,6 +229,9 @@ namespace Options {
       ("old_hwmcc",
        "Use the original HWMCC action from iimc-2.0")
 
+      ("new_hwmcc",
+       "Use the quip- and truss-based HWMCC action even where the old one is preferred")
+
       ("pre",
        "Take the precondition of the output as the target. Only works if the output is a function of state variables only.")
 
@@ -968,6 +971,7 @@ namespace Options {
         else if (*it == "decode")          t = new DecodeAction(model);
         else if (*it == "sr")              t = new IIC::SequentialReductionAction(model);
         else if (*it == "slice")           t = new SliceAction(model);
+        else if (*it == "std_opt")         t = new IIC::StandardOptionsAction(model);
         else if (*it == "pp")              t = new IIC::PreProcessAction(model);
         else if (*it == "print_info")      t = new PrintSystemInfoAction(model);
         else if (*it == "print_time")      t = new PrintCpuTimeAction(model);

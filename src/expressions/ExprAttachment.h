@@ -109,6 +109,8 @@ public:
   void clearInitialConditions(void);
   /** Add one expression to the list of constraints. */
   void addConstraint(const ID, const ID);
+  /** Add one expression to the list of constraints (as a soft constraint). */
+  void addSoftConstraint(const ID, const ID);
   /** Add expressions to the list of constraints. */
   void addConstraints(const std::vector<ID>&, const std::vector<ID>&);
   /** Discard the current relational constraints of the model. */
@@ -226,6 +228,8 @@ public:
   bool isJusticeSet(const ID id) const;
   /** True if id is a state variable of the model. */
   bool isStateVar(const ID id) const;
+  /** True if id is a soft constraint of the model. */
+  bool isSoftConstraint(const ID id) const;
   /** Mark as "keepers" all the expressions in the model. */
   void keep(Expr::Manager::View *) const;
   /** Promote all the expressions of the model to the global context. */
@@ -281,7 +285,7 @@ private:
   class var_folder : public Expr::Manager::View::Folder {
     public:
       var_folder(Expr::Manager::View & v, const mod_map & vars_map,
-          std::set<ID> & vars) : 
+          std::set<ID> & vars) :
         Expr::Manager::View::Folder(v), _vars_map(vars_map), _vars(vars) {}
       virtual ID fold(ID id, int, const ID * const) {
         if (view().op(id) == Expr::Var && _vars_map.find(id) != _vars_map.end())
@@ -297,7 +301,7 @@ private:
 
   class node_folder : public Expr::Manager::View::Folder {
     public:
-      node_folder(Expr::Manager::View & v, std::set<ID> & nodes) : 
+      node_folder(Expr::Manager::View & v, std::set<ID> & nodes) :
         Expr::Manager::View::Folder(v),  _nodes(nodes) {}
       virtual ID fold(ID id, int, const ID * const) {
         if (view().op(id) != Expr::Not && view().op(id) != Expr::True)
@@ -345,6 +349,7 @@ private:
   mod_vec _original_state_vars;
   mod_vec _original_next_state_fns;
   mod_vec _original_initial_cond;
+  std::set<ID> _soft_constraints;
 };
 
 #endif // _ExprAttachment_

@@ -41,7 +41,7 @@ POSSIBILITY OF SUCH DAMAGE.
 using namespace std;
 
 /** Copy constructor. */
-ExprAttachment::ExprAttachment(const ExprAttachment& from, Model & model) : 
+ExprAttachment::ExprAttachment(const ExprAttachment& from, Model & model) :
   Model::Attachment(from, model),
   _inputs(from._inputs),
   _aut_state_vars(from._aut_state_vars),
@@ -221,6 +221,12 @@ void ExprAttachment::clearInitialConditions()
 void ExprAttachment::addConstraint(const ID constrId, const ID fnId)
 {
   addOrUpdate(constrId, fnId, _constraints, _constraint_fns, _constraint_var_to_fn);
+}
+
+void ExprAttachment::addSoftConstraint(const ID constrId, const ID fnId)
+{
+  addOrUpdate(constrId, fnId, _constraints, _constraint_fns, _constraint_var_to_fn);
+  _soft_constraints.insert(fnId);
 }
 
 void ExprAttachment::addConstraints(const mod_vec& constrVec, const mod_vec& fnVec)
@@ -466,6 +472,11 @@ bool ExprAttachment::isStateVar(const ID id) const
   return isVarWithType(id, _state_vars, _state_var_to_fn);
 }
 
+bool ExprAttachment::isSoftConstraint(const ID id) const
+{
+  return _soft_constraints.count(id) > 0;
+}
+
 bool ExprAttachment::isBad(const ID id) const
 {
   return isVarWithType(id, _bad, _bad_var_to_fn);
@@ -617,7 +628,7 @@ std::string ExprAttachment::string(bool) const
     ret << Expr::stringOf(*v, _ctl_properties[i], 1);
     ret << endl;
   }
-  
+
   delete v;
   return ret.str();
 
@@ -629,7 +640,7 @@ std::string ExprAttachment::dot(bool terse) const
   Expr::Manager::View * v = _model.newView();
   std::ostringstream dot;
   // Build graph header.
-  dot << "digraph \"" << _model.name() << "\" {" << endl 
+  dot << "digraph \"" << _model.name() << "\" {" << endl
       << "edge [dir=none];" << endl;
   // Build the source subgraph with next state and output variables.
   dot << "{ rank=source;" << endl;
@@ -665,7 +676,7 @@ std::string ExprAttachment::circuitGraph(bool terse) const
   Expr::Manager::View * v = _model.newView();
   std::ostringstream dot;
   // Build graph header.
-  dot << "digraph \"" << _model.name() 
+  dot << "digraph \"" << _model.name()
       << "\" { orientation=landscape; rankdir=LR;\n" ;
   // Build the source subgraph with the output variables.
   for (const_v_iter i = _outputs.begin(); i != _outputs.end(); ++i) {
@@ -1100,10 +1111,10 @@ void ExprAttachment::info() const {
     if (this_fanout < min_fanout)
       min_fanout = this_fanout;
   }
-  cout << "Maximum/average/minimum fanout: " << max_fanout << "/" 
+  cout << "Maximum/average/minimum fanout: " << max_fanout << "/"
        << (total_fanout / (double) fanout.size())
        << "/" << min_fanout << endl;
-    
+
   Options::Verbosity verbosity = _model.verbosity();
   if (verbosity > Options::Verbose) {
     // Print input fanout.

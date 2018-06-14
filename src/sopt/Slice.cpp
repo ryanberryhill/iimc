@@ -51,6 +51,7 @@ ID var(Expr::Manager::View & ev, ID lit) {
 }
 
 void printVector(Expr::Manager::View & ev, const vector<ID> & c) {
+  cout << "Slice found: ";
   for (vector<ID>::const_iterator it = c.begin(); it != c.end(); it++)
     cout << Expr::stringOf(ev, *it) << " ";
   cout << endl;
@@ -269,8 +270,8 @@ void SliceAction::exec() {
       ID discConstr = ev.newVar(oss.str());
       vector<ID> cube;
       Expr::complement(ev, *it, cube);
-      eat->addConstraint(discConstr, ev.apply(Expr::Not, 
-                                     ev.apply(Expr::And, cube)));
+      eat->addSoftConstraint(discConstr, ev.apply(Expr::Not,
+                                         ev.apply(Expr::And, cube)));
     }
 
     m.release(eat);
@@ -292,4 +293,4 @@ void SliceAction::exec() {
     cout << sig << "Spent "
          << (Util::get_user_cpu_time() - startTime) / 1000000.0 << "s" << endl;
 
-};
+}

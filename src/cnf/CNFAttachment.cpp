@@ -110,7 +110,7 @@ void CNFAttachment::techMap(const ExprAttachment * eat, Expr::Manager::View * vi
   // print status
   if (model().verbosity() > Options::Silent)
     cout << "CNFAttachment: building CNF using Technology Mapping (k = " << k << ", l = " << l << ")\n";
-  
+
   // get mutable aig attachments
   const AIGAttachment* const aigat = static_cast<const AIGAttachment *>(_model.constAttachment(Key::AIG));
   AIGAttachment cpaigat(*aigat, model());
@@ -123,7 +123,7 @@ void CNFAttachment::techMap(const ExprAttachment * eat, Expr::Manager::View * vi
   for(unsigned i = 0; i < latches.size(); ++i) {
     primed.push_back(view->prime(latches[i]));
   }
-  
+
   // add the primed latches to the AIG as additional inputs
   vector< ::Opt::NodeRef> primedaig;
   for(unsigned i = 0; i < primed.size(); ++i) {
@@ -237,7 +237,7 @@ void CNFAttachment::nice(const ExprAttachment * eat, Expr::Manager::View * view,
   // construct transition relation
   vector<ID> tr;
   for (unsigned int i = 0; i < latches.size(); ++i)
-    tr.push_back(view->apply(Expr::Equiv, 
+    tr.push_back(view->apply(Expr::Equiv,
                              view->prime(latches[i]),
                              fns[i]));
 
@@ -274,11 +274,20 @@ void CNFAttachment::tseitin(const ExprAttachment * eat, Expr::Manager::View * vi
   // construct transition relation
   vector<ID> tr;
   for (unsigned int i = 0; i < latches.size(); ++i)
-    tr.push_back(view->apply(Expr::Equiv, 
+    tr.push_back(view->apply(Expr::Equiv,
                              view->prime(latches[i]),
                              fns[i]));
   Expr::tseitin(*view, tr, _cnf, &satIdOfId);
-  _core_cnf_no_constraints = _cnf;
+  std::vector<std::vector<ID> > nocons = _cnf;
+
+  bool disable_simp = model().options().count("cnf_simp_disable");
+
+  if (disable_simp) {
+    _core_cnf_no_constraints = nocons;
+  } else {
+    CNF::simplify(_model, nocons, _core_cnf_no_constraints,
+            eat->inputs(), eat->stateVars(), eat->nextStateFns());
+  }
 
   const vector<ID> & constraints = eat->constraintFns();
   vector<ID> fltrdConstraints;
@@ -324,7 +333,7 @@ void CNFAttachment::wilson(const ExprAttachment * eat, Expr::Manager::View * vie
   // construct transition relation
   vector<ID> tr;
   for (unsigned int i = 0; i < latches.size(); ++i)
-    tr.push_back(view->apply(Expr::Equiv, 
+    tr.push_back(view->apply(Expr::Equiv,
                              view->prime(latches[i]),
                              fns[i]));
   vector<ID> constraints = eat->constraintFns();
@@ -396,14 +405,14 @@ void CNFAttachment::build()
       break;
   }
   if (model().verbosity() > Options::Terse)
-    cnf_stats("CNFAttachment:", _cnf); 
+    cnf_stats("CNFAttachment:", _cnf);
 
-  if(!disable_simp) {
+  if (!disable_simp) {
     // optionally run CNF simplification
     CNF::simplify(_model, _cnf, cnf, inputs, latches, fns);
 
     if (model().verbosity() > Options::Terse)
-      cnf_stats("CNFAttachment simplified:", cnf); 
+      cnf_stats("CNFAttachment simplified:", cnf);
   }
 
   _core_cnf.insert(_core_cnf.end(), cnf.begin(), cnf.end());

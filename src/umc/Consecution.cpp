@@ -151,21 +151,28 @@ namespace UMC {
   std::vector<Clause> ConsecutionChecker::getConstraintClauses() {
     const ExprAttachment * eat = (const ExprAttachment *) model.constAttachment(Key::EXPR);
     std::vector<Clause> constraint_clauses;
-    assert(eat->constraintFns().empty());
-#if 0
     auto constraints = eat->constraintFns();
-    auto pconstraints = constraints;
-    Expr::primeFormulas(ev, pconstraints);
-    constraints.insert(constraints.end(), pconstraints.begin(), pconstraints.end());
+    std::vector<ID> hard_constraints;
 
-    if (!constraints.empty()) {
-      for (ID id : constraints) {
+    for (ID fn : constraints) {
+      if (eat->isSoftConstraint(fn)) {
+        logger.informative() << "Ignoring soft constraint: " << pc({fn}) << std::endl;
+      } else {
+        hard_constraints.push_back(fn);
+      }
+    }
+
+    auto pconstraints = hard_constraints;
+    Expr::primeFormulas(ev, pconstraints);
+    hard_constraints.insert(hard_constraints.end(), pconstraints.begin(), pconstraints.end());
+
+    if (!hard_constraints.empty()) {
+      for (ID id : hard_constraints) {
         Expr::tseitin(ev, id, constraint_clauses);
       }
     }
 
     model.constRelease(eat);
-#endif
     return constraint_clauses;
   }
 
@@ -196,6 +203,7 @@ namespace UMC {
     ID p_eq_bad_prime = ev.apply(Expr::Equiv, badprime, pprime);
 
     // Plain CNF is just the transition relation
+    // We need to get it without constraints due to the "soft constraints" hack
     clauses = cnfat->getPlainCNFNoConstraints();
     Expr::tseitin(ev, p_eq_bad_prime, pprime_clauses);
     Expr::tseitin(ev, p_eq_bad, p_clauses);

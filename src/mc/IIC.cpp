@@ -383,6 +383,7 @@ namespace IIC {
     // Choose number of threads.
     unsigned nthreads = modelSize > 0 ? ceil((4000000)/modelSize) : thread_limit;
     nthreads = nthreads < thread_limit ? nthreads : thread_limit;
+    nthreads = nthreads < 12 ? nthreads : 12;
     unsigned long reorder_timeout = 1500*nthreads;
     // Push tactics at the front of the tactic queue in reverse order.
     // This way, the tactics following "standard" are still executed after it.
@@ -593,7 +594,15 @@ namespace IIC {
 
 
   void HwmccAction::exec() {
-    if (model().options().count("old_hwmcc") || model().defaultMode() != Model::mIC3) {
+    bool old_hwmcc = model().options().count("old_hwmcc");
+    bool new_hwmcc = model().options().count("new_hwmcc");
+
+    assert(!(old_hwmcc && new_hwmcc));
+
+    old_hwmcc = old_hwmcc || model().defaultMode() != Model::mIC3;
+    old_hwmcc = old_hwmcc && !new_hwmcc;
+
+    if (old_hwmcc) {
       model().pushFrontTactic(new IIC::IICAction(model()));
       if (model().defaultMode() == Model::mIC3) {
         model().pushFrontTactic(new SliceAction(model()));
@@ -607,9 +616,10 @@ namespace IIC {
       model().pushFrontTactic(new IIC::StandardOptionsAction(model()));
     } else {
       model().pushFrontTactic(new UMC::UMCAction(model()));
-      // The SliceAction introduces constraints which overall seems
-      // like more trouble than it's worth
-      //model().pushFrontTactic(new SliceAction(model()));
+      // Some of the below passes might introduce constraints. Quip and Truss
+      // don't handle constraints well. TODO: make them handle constraints
+      // correctly
+      model().pushFrontTactic(new SliceAction(model()));
       model().pushFrontTactic(new IIC::PreProcessAction(model()));
       model().pushFrontTactic(new PhaseAbstractionAction(model()));
       model().pushFrontTactic(new IIC::PreProcessAction(model()));
