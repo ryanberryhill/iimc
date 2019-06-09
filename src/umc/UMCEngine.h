@@ -153,6 +153,9 @@ namespace UMC {
       // Called when a lemma is deleted (e.g., through infinity reduction)
       virtual void onDeleteLemma(CubeID id)
       { (void) id; }
+      // Called when clearObligations is called
+      virtual void onClearObligations()
+      { }
       virtual void lemmaPushed(const Lemma & lem, int level, const Cube & reduced);
       virtual std::string getName() const { return "UMCEngine"; }
 

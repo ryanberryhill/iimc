@@ -1047,6 +1047,7 @@ namespace UMC {
   void UMCEngine::clearObligations() {
     obligations = ObligationQueue();
     obligation_pool.clear();
+    onClearObligations();
   }
 
   ConsecutionChecker * UMCEngine::checkerFromString(const std::string & type) const {

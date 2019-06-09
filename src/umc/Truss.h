@@ -27,6 +27,7 @@ namespace UMC {
   protected:
     virtual void onBeginLevel(int k) override;
     virtual void onEndSolve() override;
+    virtual void onClearObligations() override;
     virtual int tryPropagate(const Lemma & lem, Cube & reduced) override;
     virtual void onAddKnownCube(const Lemma & lem, int lv) override;
     virtual void onDeleteLemma(CubeID id) override;

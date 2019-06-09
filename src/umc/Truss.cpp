@@ -420,7 +420,7 @@ namespace UMC {
   }
 
   void TrussSolver::onEndSolve() {
-    // Opuionally construct and write a support graph at the end
+    // Optionally construct and write a support graph at the end
     if (options().do_final_sg) {
       constructSupportGraph();
     }
@@ -428,6 +428,16 @@ namespace UMC {
     if (options().do_final_sg) {
       writeSupportGraph();
     }
+  }
+
+  /*
+   * We need to clear the list of obligations added from the support graph,
+   * otherwise they are still lingering and might be written to, causing
+   * memory corruption.
+   */
+  void TrussSolver::onClearObligations()
+  {
+      sg_obligations.clear();
   }
 
   /*
