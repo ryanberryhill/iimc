@@ -275,6 +275,8 @@ namespace UMC {
       IDSet coi_latches;
       Cube init_cube;
       IDSet initially;
+      unsigned num_resets;
+      unsigned lemmas_learned_since_reset;
 
       ObligationQueue obligations;
       ObligationPool obligation_pool;

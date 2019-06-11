@@ -291,6 +291,7 @@ namespace UMC {
   {
     std::cout << "============================ Statistics ============================" << std::endl;
     std::cout << "Final level reached: " << level << std::endl;
+    std::cout << "Number of resets: " << resets << std::endl;
     std::cout << "Number of initial state bits: " << init_state_bits << std::endl;
     std::cout << "Proof size: " << proof_size << std::endl;
     std::cout << "Number of consecution calls: " << consecution_calls << std::endl;

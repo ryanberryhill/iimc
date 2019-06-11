@@ -18,12 +18,42 @@ namespace UMC {
     return p.back();
   }
 
+  unsigned luby(unsigned n)
+  {
+    for (unsigned k = 1; k < 32; ++k)
+    {
+      if (n == (1u << k) - 1)
+      {
+        return 1 << (k - 1);
+      }
+    }
+
+    for (unsigned k = 1; ; ++k)
+    {
+      if ((1u << (k - 1) <= n) && (n < (1u << k) - 1))
+      {
+        return luby(n - (1 << (k - 1)) + 1);
+      }
+    }
+  }
+
+  unsigned resetFactor(unsigned n)
+  {
+    return luby(n);
+    // A simple sequence where rf(n) > rf(n - 1) for all n > 0 and
+    // that grows slower than 2^n.
+    //if (n < 4) { return n; }
+    //else { return (unsigned) pow(2, (double) n / 2); }
+  }
+
   UMCEngine::UMCEngine(Model & m, UMCOptions o) :
                                            ev(m.newView()),
                                            logger(m.verbosity()),
                                            m(m),
                                            opts(o),
                                            current_level(0),
+                                           num_resets(0),
+                                           lemmas_learned_since_reset(0),
                                            inductive_trace(opts, stats),
                                            initiation_checker(m, *ev),
                                            gs(m, stats, logger, opts, inductive_trace, initiation_checker, *ev)
@@ -366,6 +396,7 @@ namespace UMC {
 #ifdef DEBUG
       assert(std::is_sorted(post_syn.first.begin(), post_syn.first.end()));
 #endif
+      lemmas_learned_since_reset++;
       addCube(post_syn.first, post_syn.second);
       return post_syn;
     }
@@ -406,6 +437,7 @@ namespace UMC {
       stats.cube_size_total += (int) t.size();
       stats.cube_size_cnt++;
       assert(g == INT_MAX || g <= (inductive_trace.getMaxFrame() + 1));
+      lemmas_learned_since_reset++;
       addCube(t, g);
       assert(!t.empty());
       std::sort(t.begin(), t.end());
@@ -556,6 +588,10 @@ namespace UMC {
     // Main loop - block the bad states at each level until a proof is found
     setLevel(0);
     while (true) {
+      // Reset the counter for number of resets at each level
+      num_resets = 0;
+      stats.resets++;
+      lemmas_learned_since_reset = 0;
       incrementLevel();
       if (bad_lemma.level > getLevel() && bad_lemma.level < INT_MAX) {
         setLevel(bad_lemma.level);
@@ -658,8 +694,12 @@ namespace UMC {
 
       logObligation(po);
 
-      if (numObligations() > options().clear_queue_threshold) {
+      int reset_threshold = resetFactor(num_resets + 1) * options().clear_queue_threshold;
+      if (numObligations() > reset_threshold && lemmas_learned_since_reset > 0) {
         logger.verbose() << "Clearing the queue due to too many obligations" << std::endl;
+        num_resets++;
+
+        lemmas_learned_since_reset = 0;
         clearObligations();
         renew();
         pushObligation(newObligation(bad_cube, k, NULL));

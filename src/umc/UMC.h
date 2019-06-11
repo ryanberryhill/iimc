@@ -321,6 +321,7 @@ namespace UMC {
   public:
     UMCStats() :
       level(0),
+      resets(0),
       init_state_bits(0),
       sat_calls(0),
       consecution_calls(0),
@@ -368,6 +369,7 @@ namespace UMC {
     void print() const;
 
     int level;
+    int resets;
     int init_state_bits;
     int sat_calls;
     int consecution_calls;
