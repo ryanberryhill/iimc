@@ -1067,9 +1067,9 @@ namespace UMC {
 
   Generalizer * UMCEngine::generalizerFromString(const std::string & type, ConsecutionChecker & cons) {
     if (type == "down") {
-      return generalizer<Generalizer>(cons);
+      return generalizer<Generalizer>(cons, opts.gen_random);
     } else if (type == "iter") {
-      return generalizer<IterativeGeneralizer>(cons);
+      return generalizer<IterativeGeneralizer>(cons, opts.gen_random);
     } else {
       std::string msg = type + " is not a recognized generalization strategy";
       throw std::invalid_argument(msg);

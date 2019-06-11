@@ -1,10 +1,14 @@
 #include "UMCEngine.h"
 #include "Generalization.h"
 
+#include <algorithm>
+
 namespace UMC {
 
   Generalizer::Generalizer(EngineGlobalState & gs,
-                           ConsecutionChecker & cons) :
+                           ConsecutionChecker & cons,
+                           bool random) :
+        m_random(random),
         inductive_trace(gs.inductive_trace),
         model(gs.model),
         opts(gs.opts),
@@ -13,7 +17,7 @@ namespace UMC {
         cons_checker(cons),
         initiation_checker(gs.initiation_checker),
         logger(gs.logger)
-      { }
+  { }
 
 
   PrintCubePair Generalizer::pc(const Cube & cube) const {
@@ -121,11 +125,17 @@ namespace UMC {
                         << " levels " << lo << " - " << hi
                         << std::endl;
 
+    if (m_random)
+    {
+        std::random_shuffle(cube.begin(), cube.end());
+    }
+
     // Check if absolutely invariant
     Cube c = cube;
     if (consecutionApprox(c, INT_MAX)) {
       mic(c, INT_MAX);
       cube = c;
+      std::sort(cube.begin(), cube.end());
       return INT_MAX;
     }
 
@@ -151,12 +161,14 @@ namespace UMC {
       if(down(c, INT_MAX, dummy)) {
         mic(c, INT_MAX);
         cube = c;
+        std::sort(cube.begin(), cube.end());
         return INT_MAX;
       }
     }
 
     // definitely inductive relative to F_k
     mic(cube, k);
+    std::sort(cube.begin(), cube.end());
     return k + 1;
   }
 
@@ -218,7 +230,6 @@ namespace UMC {
     assert(initiation(cube));
 #endif
     prime_implicate(cube, k, keep);
-    std::sort(cube.begin(), cube.end());
   }
 
   /*

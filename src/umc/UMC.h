@@ -470,6 +470,7 @@ namespace UMC {
     std::string primary_cons;
     std::string support_cons;
     std::string gen;
+    bool gen_random;
     std::string lift_style;
     std::string sg_infdot_file;
     std::string sg_dot_file;
@@ -505,6 +506,7 @@ namespace UMC {
                     primary_cons("multi"),
                     support_cons("activation"),
                     gen("down"),
+                    gen_random(false),
                     lift_style("iter"),
                     sg_infdot_file(""),
                     sg_dot_file(""),
@@ -573,6 +575,7 @@ namespace UMC {
       num_ctgs = opts["umc_num_ctgs"].as<int>();
       ctg_depth = opts["umc_ctg_depth"].as<int>();
       up_threshold = opts["umc_up_threshold"].as<int>();
+      gen_random = opts["umc_gen_random"].as<bool>();
       gen_fails = opts["umc_gen_fails"].as<int>();
       gen_budget = opts["umc_gen_budget"].as<int>();
       lift_budget = opts["umc_lift_budget"].as<int>();

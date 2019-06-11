@@ -105,8 +105,8 @@ namespace UMC {
       }
 
       template<class G, class C = ConsecutionChecker>
-      G * generalizer(C & cons_checker) {
-        return new G(gs, cons_checker);
+      G * generalizer(C & cons_checker, bool random = false) {
+        return new G(gs, cons_checker, random);
       }
 
       ConsecutionChecker * checkerFromString(const std::string & type) const;

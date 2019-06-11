@@ -25,6 +25,8 @@ namespace UMC {
       void mic(Cube & cube, int k, int limit = -1) const;
       void reduce(Cube & cube, const Cube & sup, const Cube & prev_cube, const Cube & crits) const;
 
+      bool m_random;
+
     protected:
       InductiveTrace & inductive_trace;
       const Model & model;
@@ -48,7 +50,8 @@ namespace UMC {
 
     public:
       Generalizer(EngineGlobalState & gs,
-                  ConsecutionChecker & cons);
+                  ConsecutionChecker & cons,
+                  bool random = false);
 
       virtual ~Generalizer() { }
 
@@ -62,8 +65,9 @@ namespace UMC {
   class IterativeGeneralizer : public Generalizer {
     public:
       IterativeGeneralizer(EngineGlobalState & gs,
-                           ConsecutionChecker & cons) :
-        Generalizer(gs, cons)
+                           ConsecutionChecker & cons,
+                           bool random) :
+        Generalizer(gs, cons, random)
       { }
 
       virtual int generalize(int lo, int hi, Cube & c) const override;
