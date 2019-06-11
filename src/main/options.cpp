@@ -437,6 +437,10 @@ namespace Options {
         value<string>()->default_value(""),
         "UMC option: strategy for the primary consecution solver")
 
+      ("umc_gen_random",
+       value<bool>()->default_value(false),
+       "UMC option: shuffle cubes in generalization")
+
       ("umc_gen",
        value<string>()->default_value(""),
        "UMC option: strategy for generalization")
