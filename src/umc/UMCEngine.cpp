@@ -693,6 +693,14 @@ namespace UMC {
 
       logObligation(po);
 
+      // Whenever the queue runs empty, we should reset this counter.
+      // Otherwise, we might waste time filling the queue with the same
+      // obligations that are already in it right after a reset.
+      if (obligationQueueEmpty())
+      {
+        lemmas_learned_since_reset = 0;
+      }
+
       int reset_threshold = INT_MAX;
       if (options().clear_queue_threshold < INT_MAX)
       {
