@@ -293,7 +293,6 @@ namespace UMC {
     assert(cube_set.size() == c.size());
     // The full cube satisfies the predicate (i.e., initiation and
     // k-consecution)
-    logger.verbose() << "PI " << pc(c) << std::endl;
     assert(initiation(c));
     assert(consecution(c, k));
 #endif

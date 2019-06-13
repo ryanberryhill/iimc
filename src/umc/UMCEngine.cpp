@@ -590,7 +590,6 @@ namespace UMC {
     while (true) {
       // Reset the counter for number of resets at each level
       num_resets = 0;
-      stats.resets++;
       lemmas_learned_since_reset = 0;
       incrementLevel();
       if (bad_lemma.level > getLevel() && bad_lemma.level < INT_MAX) {
@@ -694,10 +693,16 @@ namespace UMC {
 
       logObligation(po);
 
-      int reset_threshold = resetFactor(num_resets + 1) * options().clear_queue_threshold;
+      int reset_threshold = INT_MAX;
+      if (options().clear_queue_threshold < INT_MAX)
+      {
+        reset_threshold = resetFactor(num_resets + 1) * options().clear_queue_threshold;
+      }
+
       if (numObligations() > reset_threshold && lemmas_learned_since_reset > 0) {
         logger.verbose() << "Clearing the queue due to too many obligations" << std::endl;
         num_resets++;
+        stats.resets++;
 
         lemmas_learned_since_reset = 0;
         clearObligations();
