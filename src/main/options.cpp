@@ -504,7 +504,7 @@ namespace Options {
       ("quip_multi_excl",
        "quip option: use multiSAT + activation for exclusion")
 
-      ("quip_clear_queue",
+      ("umc_clear_queue",
         value<int>()->default_value(INT_MAX),
        "quip option: clear the obligation queue if it gets this large")
 
@@ -517,11 +517,11 @@ namespace Options {
        "truss option: minimum level at which to apply experimental support graph")
 
       ("truss_effort_limit",
-        value<int>()->default_value(INT_MAX),
+        value<int>()->default_value(4),
        "truss option: maximum effort to spend on SGObligations")
 
       ("truss_effort_limit_minlvl",
-        value<int>()->default_value(INT_MAX),
+        value<int>()->default_value(4),
        "truss option: maximum effort to spend on SGObligations at the lowest level")
 
       ("truss_dot",

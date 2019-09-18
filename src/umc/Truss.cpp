@@ -7,6 +7,12 @@ namespace UMC {
     support_checker (checkerFromString(options().support_cons)),
     support_graph   (new SupportGraph(inductive_trace, logger))
   {
+    if (options().clear_queue_threshold < 50 || options().clear_queue_threshold > 5000)
+    {
+        UMCOptions o(options());
+        o.clear_queue_threshold = 50;
+        setOptions(o);
+    }
     trussPrepare();
   }
 

@@ -265,7 +265,6 @@ namespace UMC {
 
     private:
       void initCircuitData();
-      void setOptions(const UMCOptions & new_opts) { opts = new_opts; }
 
       Model & m;
       UMCOptions opts;
@@ -282,6 +281,7 @@ namespace UMC {
       ObligationPool obligation_pool;
 
     protected:
+      void setOptions(const UMCOptions & new_opts) { opts = new_opts; }
       InductiveTrace inductive_trace;
       InitiationChecker initiation_checker;
       EngineGlobalState gs;

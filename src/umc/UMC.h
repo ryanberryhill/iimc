@@ -611,7 +611,7 @@ namespace UMC {
       sg_dot_file = opts["truss_dot"].as<std::string>();
       ugly_lemmas = !opts.count("truss_xugly");
 
-      clear_queue_threshold = opts["quip_clear_queue"].as<int>();
+      clear_queue_threshold = opts["umc_clear_queue"].as<int>();
 
       // Without ugly lemmas, the effort limits cause non-termination
       assert(sg_effort_limit == INT_MAX || ugly_lemmas);
