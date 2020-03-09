@@ -51,6 +51,8 @@ namespace SAT {
 
 /* Massive duplication between this and MinisatView */
 
+
+
 class GlucoseView : public SAT::Manager::View {
   friend class Manager;
 public:

@@ -41,13 +41,25 @@ POSSIBILITY OF SUCH DAMAGE.
 
 using namespace std;
 
+// HACK: for seed noise tests
+unsigned g_sat_seed = 0;
+
 namespace SAT {
+
 
   enum {TIMEOUT, UNSATISFIABLE, SATISFIABLE};
 
   GlucoseView::GlucoseView(Manager & _man, Expr::Manager::View & _eview) :
     View(_man, _eview), incremental_enabled(false)
   {
+     // HACK: for seed noise tests
+     if (g_sat_seed != 0)
+     {
+       satMan.random_seed = g_sat_seed;
+       satMan.rnd_pol = true;
+       satMan.rnd_init_act = true;
+       satMan.randomizeFirstDescent = true;
+     }
   }
 
   GlucoseView::~GlucoseView() {

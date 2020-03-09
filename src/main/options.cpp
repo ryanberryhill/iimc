@@ -81,6 +81,9 @@ POSSIBILITY OF SUCH DAMAGE.
 using namespace std;
 using namespace boost::program_options;
 
+// HACK for seed noise tests
+extern unsigned g_sat_seed;
+
 //Proof Engines
 namespace IIC {
   ActionRegistrar IIC::IICAction::action("check", "Competition tactic");
@@ -219,6 +222,10 @@ namespace Options {
       ("verbosity,v",
        value<int>(&verbosityLevel)->default_value(0),
        "Set verbosity level (0-4)")
+
+      ("sat_seed",
+       value<unsigned>(&g_sat_seed)->default_value(0),
+       "SAT Seed (for seed noise tests)")
 
       ("print_cex",
        "Print counterexample trace if property fails")
